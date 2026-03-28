@@ -76,7 +76,7 @@ export class StudentService {
     return updatedProfile;
   }
 
-  async addSkill(userId: number, skillName: string, category: string = "General") {
+  async addSkill(userId: number, skillName: string, category: string = "General", level: number = 3) {
     // Check if skill exists, if not create it
     let skill = await prisma.skill.findUnique({
       where: { name: skillName },
@@ -109,7 +109,7 @@ export class StudentService {
             skill_id: skill.id,
           }
         },
-        data: { category }
+        data: { category, level }
       });
     } else {
       // Add skill to student
@@ -118,6 +118,7 @@ export class StudentService {
           student_user_id: userId,
           skill_id: skill.id,
           category,
+          level,
         },
       });
     }

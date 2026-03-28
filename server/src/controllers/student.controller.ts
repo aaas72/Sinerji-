@@ -80,7 +80,7 @@ export const addSkill = async (req: Request, res: Response, next: NextFunction) 
       return next(new AppError(errorMessages, 400));
     }
 
-    const updatedProfile = await studentService.addSkill(req.user.id, validation.data.skillName, validation.data.category);
+    const updatedProfile = await studentService.addSkill(req.user.id, validation.data.skillName, validation.data.category, validation.data.level);
 
     res.status(200).json({
       status: 'success',

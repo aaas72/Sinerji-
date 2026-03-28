@@ -47,6 +47,7 @@ export const updateStudentProfileSchema = z.object({
 export const addSkillSchema = z.object({
   skillName: z.string().min(1, "Skill name cannot be empty"),
   category: z.string().min(1, "Category cannot be empty").default("General"),
+  level: z.number().int().min(1, "Level must be between 1 and 10").max(10, "Level must be between 1 and 10"),
 });
 
 export const updateCompanyProfileSchema = z.object({

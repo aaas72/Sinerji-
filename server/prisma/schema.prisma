@@ -82,6 +82,7 @@ model StudentSkill {
   student_user_id Int
   skill_id        Int
   category        String @default("General")
+  level           Int    @default(3)
 
   student StudentProfile @relation(fields: [student_user_id], references: [user_id])
   skill   Skill          @relation(fields: [skill_id], references: [id])

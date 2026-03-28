@@ -10262,3 +10262,41 @@ The column `tasks.is_easy_apply` does not exist in the current database.
 2026-03-27 03:37:39 [info]: ::1 - - [27/Mar/2026:00:37:39 +0000] "GET /api/tasks HTTP/1.1" 304 - "http://localhost:3000/student" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 2026-03-27 03:37:39 [info]: Incoming request: GET /api/tasks
 2026-03-27 03:37:39 [info]: ::1 - - [27/Mar/2026:00:37:39 +0000] "GET /api/tasks HTTP/1.1" 304 - "http://localhost:3000/student" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-27 23:05:36 [info]: Server running on port 4000
+2026-03-28 16:17:25 [info]: Server running on port 4000
+2026-03-28 16:18:07 [info]: Server running on port 4000
+2026-03-28 16:21:16 [info]: Incoming request: POST /api/auth/login
+2026-03-28 16:21:17 [info]: ::1 - - [28/Mar/2026:13:21:17 +0000] "POST /api/auth/login HTTP/1.1" 200 303 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:20 [info]: Incoming request: GET /api/tasks
+2026-03-28 16:21:20 [info]: Incoming request: GET /api/students/me/stats
+2026-03-28 16:21:21 [info]: ::1 - - [28/Mar/2026:13:21:21 +0000] "GET /api/students/me/stats HTTP/1.1" 304 - "http://localhost:3000/student" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:21 [info]: ::1 - - [28/Mar/2026:13:21:21 +0000] "GET /api/tasks HTTP/1.1" 304 - "http://localhost:3000/student" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:21 [info]: Incoming request: GET /api/students/me/stats
+2026-03-28 16:21:21 [info]: ::1 - - [28/Mar/2026:13:21:21 +0000] "GET /api/students/me/stats HTTP/1.1" 304 - "http://localhost:3000/student" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:21 [info]: Incoming request: GET /api/tasks
+2026-03-28 16:21:21 [info]: ::1 - - [28/Mar/2026:13:21:21 +0000] "GET /api/tasks HTTP/1.1" 304 - "http://localhost:3000/student" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:39 [info]: Incoming request: GET /api/tasks/48
+2026-03-28 16:21:39 [info]: Incoming request: GET /api/students/me
+2026-03-28 16:21:39 [info]: ::1 - - [28/Mar/2026:13:21:39 +0000] "GET /api/tasks/48 HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:39 [info]: Incoming request: GET /api/tasks/48
+2026-03-28 16:21:39 [info]: ::1 - - [28/Mar/2026:13:21:39 +0000] "GET /api/students/me HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:40 [info]: Incoming request: GET /api/students/me
+2026-03-28 16:21:40 [info]: ::1 - - [28/Mar/2026:13:21:40 +0000] "GET /api/tasks/48 HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:21:40 [info]: ::1 - - [28/Mar/2026:13:21:40 +0000] "GET /api/students/me HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:23:46 [info]: Incoming request: GET /api/tasks/48
+2026-03-28 16:23:46 [info]: Incoming request: GET /api/students/me
+2026-03-28 16:23:46 [info]: ::1 - - [28/Mar/2026:13:23:46 +0000] "GET /api/tasks/48 HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:23:46 [info]: ::1 - - [28/Mar/2026:13:23:46 +0000] "GET /api/students/me HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:24:29 [info]: Incoming request: GET /api/tasks/48
+2026-03-28 16:24:29 [info]: Incoming request: GET /api/students/me
+2026-03-28 16:24:29 [info]: ::1 - - [28/Mar/2026:13:24:29 +0000] "GET /api/tasks/48 HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:24:29 [info]: ::1 - - [28/Mar/2026:13:24:29 +0000] "GET /api/students/me HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:24:29 [info]: Incoming request: GET /api/tasks/48
+2026-03-28 16:24:29 [info]: Incoming request: GET /api/students/me
+2026-03-28 16:24:29 [info]: ::1 - - [28/Mar/2026:13:24:29 +0000] "GET /api/tasks/48 HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:24:29 [info]: ::1 - - [28/Mar/2026:13:24:29 +0000] "GET /api/students/me HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:25:56 [info]: Incoming request: GET /api/tasks/48
+2026-03-28 16:25:56 [info]: Incoming request: GET /api/students/me
+2026-03-28 16:25:56 [info]: ::1 - - [28/Mar/2026:13:25:56 +0000] "GET /api/tasks/48 HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:25:56 [info]: ::1 - - [28/Mar/2026:13:25:56 +0000] "GET /api/students/me HTTP/1.1" 304 - "http://localhost:3000/student/tasks/48/apply" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+2026-03-28 16:30:00 [info]: Server running on port 4000
