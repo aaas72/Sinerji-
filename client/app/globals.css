@@ -1,0 +1,148 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --color-body-bg: #f3f4f6;
+  /* خلفية البدي الرئيسي */
+  --color-section-bg: #ffffff;
+  /* خلفية القسم */
+  --color-primary: #004d40;
+  /* اللون الرئيسي */
+  --color-secondary: #787878;
+  /* اللون الثانوي */
+  --color-special: #fbb049;
+  /* اللون الخاص */
+}
+
+/* تطبيق الخلفيات الأساسية */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-body-bg);
+  color: var(--color-secondary);
+  font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto,
+    Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+.bg-section {
+  background-color: var(--color-section-bg);
+}
+
+/* كلاسات مساعدة للاستخدام السريع */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+
+.text-secondary {
+  color: var(--color-secondary);
+}
+
+.bg-special {
+  background-color: var(--color-special);
+}
+
+.text-special {
+  color: var(--color-special);
+}
+
+.border-primary {
+  border-color: var(--color-primary);
+}
+
+.border-secondary {
+  border-color: var(--color-secondary);
+}
+
+.border-special {
+  border-color: var(--color-special);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-poppins), var(--font-inter), sans-serif;
+}
+
+/* كلاسات خطوط اختيارية */
+.font-heading {
+  font-family: var(--font-poppins), var(--font-inter), sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto,
+    Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+/* Custom scrollbar for right column */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  /* Firefox */
+  scrollbar-color: #a9a9a9 transparent;
+  /* Firefox */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  /* Chrome, Edge, Safari */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #004d40;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #00695c;
+}
+
+/* Auth Modal Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}

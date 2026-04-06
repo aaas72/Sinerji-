@@ -1,0 +1,417 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import MainSection from "@/components/ui/layouts/MainSection";
+import {
+  FormCard,
+  FormInput,
+  FormTextarea,
+  FormSelect,
+  FormRow,
+  FormSection,
+  FormButton,
+} from "@/components/ui/form";
+import { FiX, FiPlus, FiAlertCircle, FiDollarSign, FiCalendar } from "react-icons/fi";
+import { taskService } from "@/services/task.service";
+import { TASK_CATEGORIES, getSubcategories } from "@/constants/categories";
+
+
+const createTaskSchema = z.object({
+  title: z.string().min(1, "Görev başlığı zorunludur"),
+  description: z.string().min(10, "Açıklama zorunludur ve en az 10 karakter olmalı"),
+  category: z.string().min(1, "Kategori seçimi zorunludur"),
+  subcategory: z.string().min(1, "Alt kategori seçimi zorunludur"),
+  hardSkills: z.array(z.object({
+    skill: z.string().min(1),
+    level: z.number().min(1).max(5),
+  })).min(1, "En az bir teknik yetenek eklenmeli"),
+  softSkills: z.array(z.string()).optional(),
+  reward_type: z.string().optional(),
+  budget: z.string().optional(),
+  positions: z.number().min(1, "Pozisyon sayısı zorunludur"),
+  experience_level: z.string().min(1, "Seviye seçimi zorunludur"),
+  preferred_major: z.string().optional(),
+  work_type: z.string().min(1, "Çalışma tipi zorunludur"),
+  deadline: z.string().optional(),
+});
+
+type CreateTaskFormData = z.infer<typeof createTaskSchema>;
+
+export default function NewTaskPage() {
+  const router = useRouter();
+  const [hardSkills, setHardSkills] = useState<{ skill: string; level: number }[]>([]);
+  const [hardSkillInput, setHardSkillInput] = useState("");
+  const [hardSkillLevel, setHardSkillLevel] = useState(3);
+  const [softSkills, setSoftSkills] = useState<string[]>([]);
+  const [softSkillInput, setSoftSkillInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<CreateTaskFormData>({
+    resolver: zodResolver(createTaskSchema),
+  });
+
+  const selectedCategory = watch("category");
+  const watchedRewardType = watch("reward_type");
+  const watchedExperienceLevel = watch("experience_level");
+  const watchedWorkType = watch("work_type");
+  const availableSubcategories = selectedCategory ? getSubcategories(selectedCategory) : [];
+
+
+  // Hard skill handlers
+  const handleAddHardSkill = () => {
+    if (hardSkillInput.trim() && !hardSkills.some(h => h.skill === hardSkillInput.trim())) {
+      setHardSkills([...hardSkills, { skill: hardSkillInput.trim(), level: hardSkillLevel }]);
+      setHardSkillInput("");
+      setHardSkillLevel(3);
+    }
+  };
+  const handleRemoveHardSkill = (skill: string) => {
+    setHardSkills(hardSkills.filter(h => h.skill !== skill));
+  };
+  // Soft skill handlers
+  const handleAddSoftSkill = () => {
+    if (softSkillInput.trim() && !softSkills.includes(softSkillInput.trim())) {
+      setSoftSkills([...softSkills, softSkillInput.trim()]);
+      setSoftSkillInput("");
+    }
+  };
+  const handleRemoveSoftSkill = (skill: string) => {
+    setSoftSkills(softSkills.filter(s => s !== skill));
+  };
+
+  const onSubmit = async (data: CreateTaskFormData) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const payload = {
+        ...data,
+        hardSkills,
+        softSkills,
+        deadline: data.deadline ? new Date(data.deadline).toISOString() : undefined,
+      };
+      await taskService.createTask(payload);
+      router.push("/company/tasks");
+    } catch (err) {
+      console.error("Task creation error:", err);
+      type ErrorWithResponse = {
+        response?: { data?: { message?: string } };
+      };
+      const errorObj = err as ErrorWithResponse;
+      if (
+        typeof err === "object" && err !== null && "response" in err &&
+        typeof errorObj.response === "object" && errorObj.response !== null &&
+        "data" in errorObj.response
+      ) {
+        setError(errorObj.response?.data?.message || "Görev oluşturulurken bir hata oluştu.");
+      } else {
+        setError("Görev oluşturulurken bir hata oluştu.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen container mx-auto">
+      {/* Breadcrumb for page navigation */}
+      <Breadcrumb
+        items={[
+          { label: "Görevler", href: "/company/tasks" },
+          { label: "Yeni Görev Yayınla" }
+        ]}
+      />
+
+      <MainSection hideHeader>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Category & Subcategory */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
+              <select
+                {...register("category", {
+                  onChange: () => {
+                    setValue("subcategory", "");
+                  },
+                })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm hover:border-gray-400 bg-white"
+              >
+                <option value="">Seçiniz</option>
+                {TASK_CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+              {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+            </div>
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Alt Kategori</label>
+              <select
+                {...register("subcategory")}
+                disabled={!selectedCategory}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm bg-white ${
+                  !selectedCategory
+                    ? "opacity-50 cursor-not-allowed bg-gray-50"
+                    : "hover:border-gray-400"
+                }`}
+              >
+                <option value="">
+                  {selectedCategory ? "Seçiniz" : "Önce kategori seçiniz"}
+                </option>
+                {availableSubcategories.map((sub) => (
+                  <option key={sub.value} value={sub.value}>
+                    {sub.label}
+                  </option>
+                ))}
+              </select>
+              {errors.subcategory && <p className="text-red-500 text-xs mt-1">{errors.subcategory.message}</p>}
+            </div>
+          </div>
+          {/* Title */}
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-primary transition-colors">
+              Görev Başlığı
+            </label>
+            <input
+              type="text"
+              {...register("title")}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm hover:border-gray-400"
+              placeholder="Örn: React Frontend Developer Stajyeri"
+            />
+            {errors.title && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.title.message}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Adayların ilgisini çekecek net ve anlaşılır bir başlık giriniz.
+            </p>
+          </div>
+
+          {/* Description */}
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-primary transition-colors">
+              Açıklama
+            </label>
+            <textarea
+              {...register("description")}
+              rows={6}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm hover:border-gray-400 resize-y min-h-[150px]"
+              placeholder="Görev detaylarını, beklentileri ve sorumlulukları yazınız..."
+            />
+          </div>
+
+          {/* Hard Skills with Level */}
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Teknik Yetenekler (Hard Skills)</label>
+            <div className="flex gap-2 mb-3">
+              <div className="relative grow">
+                <input
+                  type="text"
+                  value={hardSkillInput}
+                  onChange={(e) => setHardSkillInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddHardSkill())}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm hover:border-gray-400"
+                  placeholder="Yetenek ekle (örn: React, Python)"
+                />
+              </div>
+              {/* Slider style skill level bar with tooltip */}
+              <div className="w-full max-w-xs flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-1 self-start">
+                  <div className="relative cursor-pointer">
+                    <span className="w-5 h-5 flex items-center justify-center rounded-full  text-gray-300 peer select-none bg-transparent">
+                      <FiAlertCircle className="w-4.5 h-4.5" />
+                    </span>
+                      <div className="absolute left-1/2 -translate-x-1/2 mt-2 z-20 hidden peer-hover:block peer-focus:block min-w-max bg-white text-gray-700 text-xs rounded shadow-lg px-3 py-2 whitespace-nowrap border border-gray-200">
+                        Teknik yeteneğin gereklilik derecesini seçin<br/>(1: Temel, 5: Uzman)
+                      </div>
+                  </div>
+                </div>
+                <div className="relative w-full flex items-center" style={{height: 48}}>
+                  {/* Track */}
+                  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-2 rounded-full bg-gray-200 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-lime-400 via-primary to-lime-600 transition-all duration-200"
+                      style={{ width: `${((hardSkillLevel-1)/4)*100}%` }}
+                    />
+                  </div>
+                  {/* Slider input */}
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={hardSkillLevel}
+                    onChange={e => setHardSkillLevel(Number(e.target.value))}
+                    className="w-full appearance-none bg-transparent z-10 h-8 focus:outline-none"
+                    style={{ WebkitAppearance: 'none' }}
+                  />
+                  {/* Custom thumb */}
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2"
+                    style={{ left: `calc(${((hardSkillLevel-1)/4)*100}% - 18px)` }}
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="mb-2 px-2 py-0.5 rounded bg-primary text-white text-xs font-bold shadow-lg">
+                        {hardSkillLevel}
+                      </div>
+                      <div className="w-9 h-9 rounded-full border-4 border-primary bg-white flex items-center justify-center shadow-md" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddHardSkill}
+                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm active:scale-95"
+              >
+                <FiPlus size={20} />
+              </button>
+            </div>
+            {hardSkills.length > 0 ? (
+              <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100 border-dashed min-h-[60px]">
+                {hardSkills.map((h) => (
+                  <span key={h.skill} className="bg-white border border-primary/20 text-primary px-3 py-1.5 rounded-full text-sm flex items-center gap-2 shadow-sm transition-all hover:shadow-md hover:border-primary/40">
+                    {h.skill} <span className="text-xs text-gray-500">Seviye: {h.level}</span>
+                    <button type="button" onClick={() => handleRemoveHardSkill(h.skill)} className="hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-colors"><FiX size={14} /></button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-400 italic p-2">Henüz teknik yetenek eklenmedi.</div>
+            )}
+          </div>
+          {/* Soft Skills */}
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Soft Skills (Opsiyonel)</label>
+            <div className="flex gap-2 mb-3">
+              <div className="relative grow">
+                <input
+                  type="text"
+                  value={softSkillInput}
+                  onChange={(e) => setSoftSkillInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSoftSkill())}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm hover:border-gray-400"
+                  placeholder="Soft skill ekle (örn: Takım Çalışması)"
+                />
+              </div>
+              <button type="button" onClick={handleAddSoftSkill} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm active:scale-95"><FiPlus size={20} /></button>
+            </div>
+            {softSkills.length > 0 ? (
+              <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100 border-dashed min-h-10">
+                {softSkills.map((s) => (
+                  <span key={s} className="bg-white border border-primary/20 text-primary px-3 py-1.5 rounded-full text-sm flex items-center gap-2 shadow-sm transition-all hover:shadow-md hover:border-primary/40">
+                    {s}
+                    <button type="button" onClick={() => handleRemoveSoftSkill(s)} className="hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-colors"><FiX size={14} /></button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-400 italic p-2">Henüz soft skill eklenmedi.</div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Reward Type */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Ödül Türü</label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><FiAward size={18} /></div>
+                <select {...register("reward_type")} className="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-lg bg-white">
+                  <option value="">Seçiniz</option>
+                  <option value="money">Para Ödülü</option>
+                  <option value="internship">Staj İmkanı</option>
+                  <option value="certificate">Sertifika</option>
+                </select>
+              </div>
+            </div>
+            {/* Budget */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Bütçe / Ücret</label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><FiDollarSign size={18} /></div>
+                <input type="number" min={0} step={1} {...register("budget")} className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white" placeholder="₺ veya $" />
+              </div>
+            </div>
+            {/* Positions */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Pozisyon Sayısı</label>
+              <input type="number" min={1} {...register("positions", { valueAsNumber: true })} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white" placeholder="Kaç kişi alınacak?" />
+              {errors.positions && <p className="text-red-500 text-xs mt-1">{errors.positions.message}</p>}
+            </div>
+            {/* Experience Level */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Deneyim Seviyesi</label>
+              <select {...register("experience_level")} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white">
+                <option value="">Seçiniz</option>
+                <option value="beginner">Başlangıç</option>
+                <option value="intermediate">Orta</option>
+                <option value="advanced">İleri</option>
+              </select>
+              {errors.experience_level && <p className="text-red-500 text-xs mt-1">{errors.experience_level.message}</p>}
+            </div>
+            {/* Preferred Major */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tercih Edilen Bölüm (Opsiyonel)</label>
+              <input type="text" {...register("preferred_major")} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white" placeholder="Örn: Bilgisayar Mühendisliği" />
+            </div>
+            {/* Work Type */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Çalışma Tipi</label>
+              <select {...register("work_type")} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white">
+                <option value="">Seçiniz</option>
+                <option value="remote">Uzaktan</option>
+                <option value="hybrid">Hibrit</option>
+                <option value="onsite">Ofiste</option>
+              </select>
+              {errors.work_type && <p className="text-red-500 text-xs mt-1">{errors.work_type.message}</p>}
+            </div>
+            {/* Deadline */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Son Başvuru Tarihi</label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><FiCalendar size={18} /></div>
+                <input type="date" {...register("deadline")} className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 flex justify-end gap-4 border-t border-gray-100 mt-8">
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => router.back()}
+              className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all"
+            >
+              Vazgeç
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              className="px-8 py-2.5 shadow-md hover:shadow-lg transition-all"
+              disabled={isLoading}
+            >
+              {isLoading ? "Yayınlanıyor..." : "Yayınla"}
+            </Button>
+          </div>
+        </form>
+      </MainSection>
+    </div>
+  );
+}
