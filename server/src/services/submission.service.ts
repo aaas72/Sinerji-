@@ -2,8 +2,10 @@ import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import { createSubmissionSchema } from '../utils/validation';
 import { z } from 'zod';
+import { MatchingService } from './matching.service';
 
 const prisma = new PrismaClient();
+const matchingService = new MatchingService();
 
 export class SubmissionService {
   async createSubmission(studentId: number, taskId: number, data: z.infer<typeof createSubmissionSchema>) {
@@ -48,16 +50,8 @@ export class SubmissionService {
       throw new AppError('You have already submitted to this task', 400);
     }
 
-    // Calculate AI Match Score
-    let aiMatchScore = 0;
-    if (task.requiredSkills.length > 0) {
-       const studentSkillNames = student.skills.map((s: any) => s.skill.name.toLowerCase());
-       let matchCount = 0;
-       task.requiredSkills.forEach((req: any) => {
-          if (studentSkillNames.includes(req.skill.name.toLowerCase())) matchCount++;
-       });
-       aiMatchScore = Math.round((matchCount / task.requiredSkills.length) * 100);
-    }
+     // Calculate AI Match Score via Python matching microservice with local fallback
+     const aiMatchScore = await matchingService.getMatchPercentageForTaskAndStudent(task, student);
 
     // Create Submission
     const submission = await prisma.submission.create({

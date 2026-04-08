@@ -16,6 +16,8 @@ export default function TaskBrowsingCard({
   selected,
   onClick,
 }: TaskBrowsingCardProps) {
+  const hasMatchPercentage = typeof task.matchPercentage === "number";
+
   return (
     <div
       onClick={onClick}
@@ -28,6 +30,11 @@ export default function TaskBrowsingCard({
     >
       {/* Top Right Actions */}
       <div className="absolute top-4 right-4 flex flex-col gap-2">
+        {hasMatchPercentage && (
+          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
+            AI % {task.matchPercentage}
+          </div>
+        )}
         <button className="text-gray-400 hover:text-[#004d40]">
           <FiBookmark size={20} />
         </button>

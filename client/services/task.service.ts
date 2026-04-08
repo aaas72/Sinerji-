@@ -30,6 +30,11 @@ export const taskService = {
     return response.data.data.task;
   },
 
+  async getRecommendedTasks(): Promise<Task[]> {
+    const response = await api.get<ApiResponse<TaskListResponse>>('/tasks/recommended');
+    return response.data.data.tasks;
+  },
+
   async createTask(data: any): Promise<Task> {
     const response = await api.post<ApiResponse<TaskDetailResponse>>('/tasks', data);
     return response.data.data.task;

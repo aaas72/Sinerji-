@@ -1,319 +1,220 @@
-
-
-// ─── إعدادات الخادم ───────────────────────────────────────────────────────────
-const API = "http://localhost:4000/api";
-
-// ─── ألوان الطرفية ────────────────────────────────────────────────────────────
-const c = {
-  reset: "\x1b[0m",
-  bold:  "\x1b[1m",
-  green: "\x1b[32m",
-  red:   "\x1b[31m",
-  yellow:"\x1b[33m",
-  cyan:  "\x1b[36m",
-  gray:  "\x1b[90m",
+type LoginResponse = {
+  user?: Record<string, unknown>;
 };
 
-const ok  = (msg: string) => console.log(`${c.green}✔${c.reset} ${msg}`);
-const err = (msg: string) => console.log(`${c.red}✘${c.reset} ${msg}`);
-const info= (msg: string) => console.log(`${c.cyan}ℹ${c.reset} ${msg}`);
-const sep = ()            => console.log(`${c.gray}${"─".repeat(60)}${c.reset}`);
-const hdr = (msg: string) => {
-  sep();
-  console.log(`${c.bold}${c.yellow}▶ ${msg}${c.reset}`);
+type RecommendedTask = {
+  id: number;
+  title: string;
+  matchPercentage?: number;
+  company?: {
+    company_name?: string;
+  };
 };
 
-// ─── مساعد HTTP ───────────────────────────────────────────────────────────────
-async function http(
-  method: string,
-  path: string,
-  body?: object,
-  token?: string
-): Promise<{ status: number; ok: boolean; json: any }> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+const BASE_URL = (process.env.TEST_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const STUDENT_EMAIL = process.env.TEST_STUDENT_EMAIL || '';
+const STUDENT_PASSWORD = process.env.TEST_STUDENT_PASSWORD || '';
+const TEST_TASK_ID = process.env.TEST_TASK_ID ? Number(process.env.TEST_TASK_ID) : undefined;
+const TEST_SUBMISSION_TEXT = process.env.TEST_SUBMISSION_TEXT || 'This is an automated matching flow test submission. I am testing the frontend-to-backend matching scenario and want to verify the AI score path end to end.';
+const TEST_SKILLS = ['React', 'Node.js', 'TypeScript', 'Next.js', 'Prisma'];
 
-  const res = await fetch(`${API}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
+let generatedCredentials: { email: string; password: string } | null = null;
+
+async function readJson(response: Response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+async function loginStudent() {
+  const email = STUDENT_EMAIL || generatedCredentials?.email;
+  const password = STUDENT_PASSWORD || generatedCredentials?.password;
+
+  if (!email || !password) {
+    throw new Error('Set TEST_STUDENT_EMAIL and TEST_STUDENT_PASSWORD, or let the test auto-register a student.');
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
   });
 
-  const json = await res.json().catch(() => null);
-  return { status: res.status, ok: res.ok, json };
-}
+  const data = (await readJson(response)) as LoginResponse | null;
 
-// ─── بيانات الاختبار ──────────────────────────────────────────────────────────
-const stamp        = Date.now();
-const companyEmail = `test_company_${stamp}@test.com`;
-const companyPass  = "Test@123456";
+  const setCookie = response.headers.get('set-cookie') || '';
+  const tokenMatch = setCookie.match(/token=([^;]+)/);
 
-const taskPayload = {
-  title:           "مطور Full-Stack (اختبار)",
-  description:     "هذه مهمة اختبار تلقائي للتحقق من صحة نظام المهام.",
-  category:        "technology",
-  subcategory:     "web-development",
-  hardSkills: [
-    { skill: "React",      level: 8,  isRequired: true,  yearsOfExperience: 2 },
-    { skill: "Node.js",    level: 7,  isRequired: true,  yearsOfExperience: 1 },
-    { skill: "PostgreSQL", level: 6,  isRequired: false, yearsOfExperience: 0 },
-  ],
-  softSkills:       ["التواصل", "العمل الجماعي"],
-  reward_type:      "money",
-  budget:           "5000",
-  currency:         "TRY",
-  positions:        2,
-  experience_level: "intermediate",
-  work_type:        "remote",
-  deadline:         new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  requiredSkills:   ["React", "Node.js", "PostgreSQL"],
-};
-
-const updatePayload = {
-  title:            "مطور Full-Stack (محدَّث)",
-  positions:        3,
-  work_type:        "hybrid",
-  experience_level: "advanced",
-  hardSkills: [
-    { skill: "React",      level: 9,  isRequired: true, yearsOfExperience: 3 },
-    { skill: "TypeScript", level: 8,  isRequired: true, yearsOfExperience: 2 },
-  ],
-};
-
-// ─── دوال التحقق التفصيلية ────────────────────────────────────────────────────
-function assertField(label: string, value: unknown, expected: unknown) {
-  if (value == expected) {
-    ok(`  ${label}: ${c.gray}${JSON.stringify(value)}${c.reset}`);
-  } else {
-    err(`  ${label}: توقعنا ${c.yellow}${JSON.stringify(expected)}${c.reset} وجدنا ${c.red}${JSON.stringify(value)}${c.reset}`);
+  if (!response.ok || !tokenMatch?.[1]) {
+    throw new Error(`Login failed: ${response.status} ${JSON.stringify(data)}`);
   }
+
+  return `token=${tokenMatch[1]}`;
 }
 
-// ─── البرنامج الرئيسي ─────────────────────────────────────────────────────────
+async function registerStudent() {
+  const email = `matching-test-${Date.now()}@example.com`;
+  const password = 'password123';
+
+  const response = await fetch(`${BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      password,
+      role: 'student',
+      full_name: 'Matching Test Student',
+      university: 'Test University',
+    }),
+  });
+
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    throw new Error(`Registration failed: ${response.status} ${JSON.stringify(data)}`);
+  }
+
+  generatedCredentials = { email, password };
+  console.log(`Registered test student: ${email}`);
+}
+
+async function completeStudentProfile(cookie: string) {
+  const response = await fetch(`${BASE_URL}/api/students/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookie,
+    },
+    body: JSON.stringify({
+      full_name: 'Matching Test Student',
+      university: 'Test University',
+      major: 'Computer Engineering',
+      graduation_year: 2026,
+      bio: 'Full-stack developer test profile prepared for AI matching flow validation.',
+      github_url: 'https://github.com/strongstudent',
+      website_url: 'https://strongstudent.dev',
+      linkedin_url: 'https://linkedin.com/in/strongstudent',
+      availability_status: 'available',
+      categories_of_interest: 'Software Engineering, AI, Web Development',
+    }),
+  });
+
+  const data = await readJson(response);
+  if (!response.ok) {
+    throw new Error(`Profile update failed: ${response.status} ${JSON.stringify(data)}`);
+  }
+
+  console.log('Profile updated for matching test.');
+}
+
+async function addTestSkills(cookie: string) {
+  for (const skillName of TEST_SKILLS) {
+    const response = await fetch(`${BASE_URL}/api/students/skills`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: cookie,
+      },
+      body: JSON.stringify({
+        skillName,
+        category: 'Tech',
+        level: 4,
+      }),
+    });
+
+    const data = await readJson(response);
+    if (!response.ok) {
+      throw new Error(`Adding skill ${skillName} failed: ${response.status} ${JSON.stringify(data)}`);
+    }
+  }
+
+  console.log(`Added ${TEST_SKILLS.length} skills for matching test.`);
+}
+
+async function fetchRecommendedTasks(cookie: string) {
+  const response = await fetch(`${BASE_URL}/api/tasks/recommended`, {
+    headers: {
+      Cookie: cookie,
+    },
+  });
+
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    throw new Error(`Recommended tasks request failed: ${response.status} ${JSON.stringify(data)}`);
+  }
+
+  const tasks = (data?.data?.tasks || []) as RecommendedTask[];
+
+  console.log(`Recommended tasks: ${tasks.length}`);
+  tasks.slice(0, 5).forEach((task, index) => {
+    const companyName = task.company?.company_name || 'Unknown company';
+    console.log(`${index + 1}. ${task.title} | ${companyName} | AI ${task.matchPercentage ?? 0}%`);
+  });
+
+  return tasks;
+}
+
+async function createTestSubmission(cookie: string, taskId: number) {
+  const response = await fetch(`${BASE_URL}/api/submissions/task/${taskId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookie,
+    },
+    body: JSON.stringify({
+      submission_content: TEST_SUBMISSION_TEXT,
+      proposed_budget: '150',
+      estimated_delivery_days: 3,
+    }),
+  });
+
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    throw new Error(`Submission request failed: ${response.status} ${JSON.stringify(data)}`);
+  }
+
+  const score = data?.data?.submission?.ai_match_score;
+  console.log(`Submission created for task ${taskId}. AI score: ${typeof score === 'number' ? score : 'n/a'}`);
+}
+
 async function main() {
-  console.log(`\n${c.bold}${c.cyan}╔════════════════════════════════════════════╗${c.reset}`);
-  console.log(`${c.bold}${c.cyan}║       فحص شامل لعمليات المهام              ║${c.reset}`);
-  console.log(`${c.bold}${c.cyan}╚════════════════════════════════════════════╝${c.reset}\n`);
+  console.log(`Base URL: ${BASE_URL}`);
 
-  let token = "";
-  let taskId = 0;
-  let passed = 0;
-  let failed = 0;
+  const healthResponse = await fetch(`${BASE_URL}/health`);
+  const healthData = await readJson(healthResponse);
+  console.log('Health:', healthResponse.ok ? healthData : { status: healthResponse.status, body: healthData });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("0. فحص صحة الخادم");
-  try {
-    const r = await fetch("http://localhost:4000/health");
-    if (r.ok || r.status === 200) { ok("الخادم يعمل"); passed++; }
-    else { err(`الخادم أرجع ${r.status}`); failed++; }
-  } catch {
-    err("الخادم غير متاح — تأكد أن npm run dev يعمل في مجلد server");
-    process.exit(1);
+  if (!STUDENT_EMAIL || !STUDENT_PASSWORD) {
+    await registerStudent();
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("1. تسجيل حساب شركة جديد");
-  {
-    const r = await http("POST", "/auth/register", {
-      email:        companyEmail,
-      password:     companyPass,
-      role:         "company",
-      company_name: `Test Company ${stamp}`,
-    });
-    if (r.ok) {
-      ok(`تم التسجيل بنجاح — ${companyEmail}`);
-      passed++;
-    } else {
-      err(`فشل التسجيل: ${r.status} — ${JSON.stringify(r.json)}`);
-      failed++;
-    }
+  const cookie = await loginStudent();
+  console.log('Login: success');
+
+  if (!STUDENT_EMAIL || !STUDENT_PASSWORD) {
+    await completeStudentProfile(cookie);
+    await addTestSkills(cookie);
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("2. تسجيل الدخول");
-  {
-    const r = await http("POST", "/auth/login", {
-      email:    companyEmail,
-      password: companyPass,
-    });
-    if (r.ok && (r.json?.data?.token || r.json?.token)) {
-      token = r.json.data?.token ?? r.json.token;
-      ok(`تسجيل الدخول ناجح — token: ${token.slice(0, 20)}...`);
-      passed++;
-    } else {
-      err(`فشل تسجيل الدخول: ${r.status} — ${JSON.stringify(r.json)}`);
-      failed++;
-      process.exit(1);
-    }
-  }
+  const recommendedTasks = await fetchRecommendedTasks(cookie);
 
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("3. إنشاء مهمة جديدة (POST /api/tasks)");
-  {
-    const r = await http("POST", "/tasks", taskPayload, token);
-    if (r.ok && r.json?.data?.task?.id) {
-      taskId = r.json.data.task.id;
-      ok(`تم إنشاء المهمة — ID: ${c.bold}${taskId}${c.reset}`);
-      const task = r.json.data.task;
-      assertField("العنوان",          task.title,           taskPayload.title);
-      assertField("الفئة",            task.category,        taskPayload.category);
-      assertField("الفئة الفرعية",    task.subcategory,     taskPayload.subcategory);
-      assertField("نوع الأجر",        task.reward_type,     taskPayload.reward_type);
-      assertField("الميزانية",        task.budget,          taskPayload.budget);
-      assertField("العملة",           task.currency,        taskPayload.currency);
-      assertField("الوظائف المتاحة",  task.positions,       taskPayload.positions);
-      assertField("مستوى الخبرة",     task.experience_level,taskPayload.experience_level);
-      assertField("نمط العمل",        task.work_type,       taskPayload.work_type);
-      info(`عدد المهارات المحفوظة: ${task.requiredSkills?.length ?? 0}`);
-      passed++;
-    } else {
-      err(`فشل إنشاء المهمة: ${r.status}\n${JSON.stringify(r.json, null, 2)}`);
-      failed++;
-      process.exit(1);
-    }
-  }
+  const submissionTargetId = Number.isFinite(TEST_TASK_ID)
+    ? (TEST_TASK_ID as number)
+    : recommendedTasks[0]?.id;
 
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("4. عرض قائمة المهام (GET /api/tasks)");
-  {
-    const r = await http("GET", "/tasks", undefined, token);
-    if (r.ok && Array.isArray(r.json?.data?.tasks)) {
-      const found = r.json.data.tasks.find((t: any) => t.id === taskId);
-      if (found) {
-        ok(`المهمة موجودة في القائمة العامة (${r.json.data.tasks.length} مهمة)`);
-        passed++;
-      } else {
-        err("المهمة المُنشأة غير موجودة في قائمة المهام");
-        failed++;
-      }
-    } else {
-      err(`فشل جلب القائمة: ${r.status}`);
-      failed++;
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("5. عرض المهام الخاصة بالشركة (GET /api/tasks/company/my-tasks)");
-  {
-    const r = await http("GET", "/tasks/company/my-tasks", undefined, token);
-    if (r.ok && Array.isArray(r.json?.data?.tasks)) {
-      const found = r.json.data.tasks.find((t: any) => t.id === taskId);
-      if (found) {
-        ok(`المهمة موجودة في قائمة مهام الشركة (${r.json.data.tasks.length} مهمة)`);
-        passed++;
-      } else {
-        err("المهمة غير موجودة في مهام الشركة");
-        failed++;
-      }
-    } else {
-      err(`فشل جلب مهام الشركة: ${r.status} — ${JSON.stringify(r.json)}`);
-      failed++;
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr(`6. عرض تفاصيل المهمة (GET /api/tasks/${taskId})`);
-  {
-    const r = await http("GET", `/tasks/${taskId}`, undefined, token);
-    if (r.ok && r.json?.data?.task) {
-      ok("تم جلب تفاصيل المهمة");
-      const task = r.json.data.task;
-      assertField("ID",               task.id,               taskId);
-      assertField("العنوان",          task.title,            taskPayload.title);
-      assertField("الوظائف المتاحة", task.positions,         taskPayload.positions);
-      assertField("نمط العمل",       task.work_type,         taskPayload.work_type);
-      const skills = task.requiredSkills ?? [];
-      info(`المهارات: ${skills.map((s: any) => `${s.skill.name}(${s.level}/${s.is_required ? "إلزامي" : "مفضل"})`).join(", ")}`);
-      passed++;
-    } else {
-      err(`فشل جلب التفاصيل: ${r.status} — ${JSON.stringify(r.json)}`);
-      failed++;
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr(`7. تعديل المهمة (PATCH /api/tasks/${taskId})`);
-  {
-    const r = await http("PATCH", `/tasks/${taskId}`, updatePayload, token);
-    if (r.ok && r.json?.data?.task) {
-      ok("تم تعديل المهمة بنجاح");
-      const task = r.json.data.task;
-      assertField("العنوان الجديد",            task.title,            updatePayload.title);
-      assertField("الوظائف الجديدة",           task.positions,        updatePayload.positions);
-      assertField("نمط العمل الجديد",          task.work_type,        updatePayload.work_type);
-      assertField("مستوى الخبرة الجديد",       task.experience_level, updatePayload.experience_level);
-      const skills = task.requiredSkills ?? [];
-      info(`المهارات بعد التعديل: ${skills.map((s: any) => `${s.skill.name}(${s.level})`).join(", ")}`);
-      passed++;
-    } else {
-      err(`فشل تعديل المهمة: ${r.status}\n${JSON.stringify(r.json, null, 2)}`);
-      failed++;
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("8. التحقق من صحة التحقق (إرسال بيانات خاطئة)");
-  {
-    const badPayload = {
-      title:            "",           // خطأ: فارغ
-      description:      "قصير",       // خطأ: أقل من 10 أحرف
-      category:         "technology",
-      subcategory:      "web",
-      hardSkills:       [],           // خطأ: يجب على الأقل مهارة واحدة (للـ create)
-      positions:        0,            // خطأ: يجب >= 1
-      experience_level: "expert",     // خطأ: قيمة غير مسموح بها
-      work_type:        "office",     // خطأ: قيمة غير مسموح بها
-    };
-    const r = await http("POST", "/tasks", badPayload, token);
-    if (!r.ok && r.status >= 400) {
-      ok(`رفض الخادم البيانات الخاطئة بـ ${r.status} — التحقق يعمل صحيحاً`);
-      info(`رسالة الخطأ: ${r.json?.message ?? JSON.stringify(r.json)}`);
-      passed++;
-    } else {
-      err(`الخادم قَبِل بيانات خاطئة! هذا خطأ أمني — status: ${r.status}`);
-      failed++;
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr(`9. حذف المهمة (DELETE /api/tasks/${taskId})`);
-  {
-    const r = await http("DELETE", `/tasks/${taskId}`, undefined, token);
-    if (r.ok || r.status === 204) {
-      ok("تم حذف المهمة بنجاح");
-      passed++;
-    } else {
-      err(`فشل حذف المهمة: ${r.status} — ${JSON.stringify(r.json)}`);
-      failed++;
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  hdr("10. التحقق من الحذف (يجب أن تُرجع 404)");
-  {
-    const r = await http("GET", `/tasks/${taskId}`, undefined, token);
-    if (!r.ok && r.status === 404) {
-      ok("المهمة محذوفة بالفعل — الخادم أرجع 404 كما هو متوقع");
-      passed++;
-    } else {
-      err(`المهمة لا تزال موجودة بعد الحذف! status: ${r.status}`);
-      failed++;
-    }
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  sep();
-  const total = passed + failed;
-  console.log(`\n${c.bold}النتيجة النهائية: ${passed}/${total} فحص ناجح${c.reset}`);
-  if (failed === 0) {
-    console.log(`${c.green}${c.bold}✔ جميع الفحوصات نجحت!${c.reset}\n`);
+  if (submissionTargetId) {
+    await createTestSubmission(cookie, submissionTargetId);
   } else {
-    console.log(`${c.red}${c.bold}✘ ${failed} فحص فشل — راجع الأخطاء أعلاه${c.reset}\n`);
-    process.exit(1);
+    console.log('No recommended task was available, skipping submission step.');
   }
 }
 
-main().catch((e) => {
-  console.error(`${c.red}خطأ غير متوقع:${c.reset}`, e);
-  process.exit(1);
+main().catch((error) => {
+  console.error('Matching flow test failed:');
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
 });

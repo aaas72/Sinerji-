@@ -26,6 +26,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isSaved, setIsSaved] = useState(false);
+  const hasMatchPercentage = typeof task.matchPercentage === "number";
 
   useEffect(() => {
     const saved = localStorage.getItem(`saved_task_${task.id}`);
@@ -62,13 +63,13 @@ export default function TaskDetail({ task }: TaskDetailProps) {
       <div className="p-6 pb-4 flex-none border-b border-gray-200 z-10 bg-white">
         {/* Logo & Title Row */}
         <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
-          <div className="flex items-start gap-4 flex-1 min-w-0">
-            <div className="w-12 h-12 flex-shrink-0 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center">
+            <div className="flex items-start gap-4 flex-1 min-w-0">
+            <div className="w-12 h-12 shrink-0 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center">
               {/* Placeholder Logo */}
               <span className="text-xs font-bold text-gray-400">LOGO</span>
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-xl font-bold text-gray-900 leading-tight mb-2 break-words">
+              <h2 className="text-xl font-bold text-gray-900 leading-tight mb-2 wrap-break-word">
                 {task.title}
               </h2>
               <div className="flex items-center flex-wrap gap-2 text-sm text-gray-600">
@@ -79,6 +80,14 @@ export default function TaskDetail({ task }: TaskDetailProps) {
                   {task.company.name}
                 </Link>
                 <span className="text-gray-300">•</span>
+                {hasMatchPercentage && (
+                  <>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                      AI uyum %{task.matchPercentage}
+                    </span>
+                    <span className="text-gray-300">•</span>
+                  </>
+                )}
                 <div className="flex items-center gap-1">
                   <span className="text-gray-700 font-semibold">4.2</span>
                   <FiStar className="w-3 h-3 fill-current text-[#fbb049]" />
@@ -89,7 +98,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
             </div>
           </div>
           <Button
-            className="bg-[#004d40] hover:bg-[#003d33] text-white px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition-colors flex-shrink-0 sm:mt-0 mt-2"
+            className="bg-[#004d40] hover:bg-[#003d33] text-white px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition-colors shrink-0 sm:mt-0 mt-2"
             variant="primary"
             onClick={() => router.push(`/student/tasks/${task.id}/apply`)}
           >
@@ -196,16 +205,16 @@ export default function TaskDetail({ task }: TaskDetailProps) {
               {task.detailTitle || "Görev Açıklaması"}
             </h3>
 
-            <div className="text-gray-700 leading-relaxed text-[15px] space-y-4 break-words">
+            <div className="text-gray-700 leading-relaxed text-[15px] space-y-4 wrap-break-word">
               {/* Render Detail Body with HTML if it's rich text */}
               {task.detailBody ? (
                 <div
-                  className="prose prose-sm prose-slate max-w-full break-words whitespace-pre-wrap [&_*]:whitespace-pre-wrap prose-headings:text-gray-800 prose-a:text-[#004d40] hover:prose-a:text-[#003d33] prose-strong:text-gray-900"
+                  className="prose prose-sm prose-slate max-w-full wrap-break-word whitespace-pre-wrap **:whitespace-pre-wrap prose-headings:text-gray-800 prose-a:text-[#004d40] hover:prose-a:text-[#003d33] prose-strong:text-gray-900"
                   style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
                   dangerouslySetInnerHTML={{ __html: task.detailBody }}
                 />
               ) : (
-                <div className="prose prose-sm prose-slate max-w-full break-words overflow-x-hidden">
+                <div className="prose prose-sm prose-slate max-w-full wrap-break-word overflow-x-hidden">
                   <p>
                     <strong>Genel Tanım:</strong>
                   </p>

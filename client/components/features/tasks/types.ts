@@ -20,6 +20,7 @@ export type Task = {
   description: string;
   detailTitle?: string;
   detailBody?: string;
+  matchPercentage?: number;
 };
 
 export const getRewardIcon = (type?: string) => {

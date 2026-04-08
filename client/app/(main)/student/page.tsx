@@ -6,8 +6,11 @@ import { Task } from "@/components/features/tasks/types";
 import { taskService } from "@/services/task.service";
 import { studentService } from "@/services/student.service";
 import { useAuthStore } from "@/hooks/useAuth";
+import Button from "@/components/ui/Button";
 import {
   FiCheckCircle,
+  FiRefreshCw,
+  FiZap,
 } from "react-icons/fi";
 
 interface StudentStats {
@@ -24,9 +27,31 @@ export default function StudentDashboard() {
   }
   const { user, _hasHydrated } = useAuthStore() as { user: User; _hasHydrated: boolean };
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [recommendedTasks, setRecommendedTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRecommendedLoading, setIsRecommendedLoading] = useState(false);
+  const [recommendedError, setRecommendedError] = useState("");
+  const [viewMode, setViewMode] = useState<"all" | "recommended">("all");
   const [error, setError] = useState("");
+
+  const mapBackendTask = (t: any): Task => ({
+    id: t.id.toString(),
+    title: t.title,
+    tags: t.requiredSkills.map((s: any) => s.skill.name),
+    rewardAmount: t.reward_amount || undefined,
+    rewardType: t.reward_type || undefined,
+    company: { id: t.company_user_id, name: t.company.company_name },
+    createdAtLabel: t.created_at
+      ? new Date(t.created_at).toLocaleDateString("tr-TR")
+      : "Yeni",
+    description: t.description || "",
+    detailTitle: t.detail_title || "Görev Detayları",
+    detailBody: t.detail_body || t.description || "",
+    location: t.location || undefined,
+    workType: t.work_type || undefined,
+    matchPercentage: typeof t.matchPercentage === "number" ? t.matchPercentage : undefined,
+  });
 
   useEffect(() => {
     fetchTasks();
@@ -51,25 +76,7 @@ export default function StudentDashboard() {
         search: filters?.keyword,
         category: filters?.category,
       });
-
-      const formattedTasks: Task[] = backendTasks.map((t) => ({
-        id: t.id.toString(),
-        title: t.title,
-        tags: t.requiredSkills.map((s) => s.skill.name),
-        rewardAmount: t.reward_amount || undefined,
-        rewardType: t.reward_type || undefined,
-        company: { id: t.company_user_id, name: t.company.company_name },
-        createdAtLabel: t.created_at
-          ? new Date(t.created_at).toLocaleDateString("tr-TR")
-          : "Yeni",
-        description: t.description || "",
-        detailTitle: t.detail_title || "Görev Detayları",
-        detailBody: t.detail_body || t.description || "",
-        location: t.location || undefined,
-        workType: t.work_type || undefined,
-      }));
-
-      setTasks(formattedTasks);
+      setTasks(backendTasks.map(mapBackendTask));
     } catch (err) {
       console.error(err);
       setError("Görevler yüklenirken bir hata oluştu.");
@@ -78,11 +85,30 @@ export default function StudentDashboard() {
     }
   };
 
+  const fetchRecommendedTasks = async () => {
+    setIsRecommendedLoading(true);
+    setRecommendedError("");
+
+    try {
+      const backendTasks = await taskService.getRecommendedTasks();
+      setRecommendedTasks(backendTasks.map(mapBackendTask));
+      setViewMode("recommended");
+    } catch (err) {
+      console.error(err);
+      setRecommendedError("AI eşleşen görevler alınamadı. Profil ve mikroservis bağlantısını kontrol edin.");
+    } finally {
+      setIsRecommendedLoading(false);
+    }
+  };
+
   // Duplicate useEffect removed to avoid calling hooks conditionally
 
   const handleSearch = (filters: SearchFilters) => {
+    setViewMode("all");
     fetchTasks(filters);
   };
+
+  const visibleTasks = viewMode === "recommended" ? recommendedTasks : tasks;
 
   if (isLoading && tasks.length === 0)
     return (
@@ -117,17 +143,58 @@ export default function StudentDashboard() {
         </div>
       </div>
 
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#004d40]/10 px-3 py-1 text-xs font-semibold text-[#004d40] mb-3">
+              <FiZap /> AI Eşleşme Testi
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Frontend'den eşleşen görevleri çek</h2>
+            <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+              Bu bölüm doğrudan backend'deki <span className="font-medium text-gray-700">/tasks/recommended</span> endpoint'ini çağırır ve mikroservis skorunu kartlarda gösterir.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant={viewMode === "recommended" ? "primary" : "outline"}
+              onClick={fetchRecommendedTasks}
+              isLoading={isRecommendedLoading}
+            >
+              Eşleşen Görevleri Getir
+            </Button>
+            <Button
+              type="button"
+              variant={viewMode === "all" ? "primary" : "outline"}
+              onClick={() => setViewMode("all")}
+              icon={FiRefreshCw}
+            >
+              Tüm Görevler
+            </Button>
+          </div>
+        </div>
+        {recommendedError && (
+          <p className="mt-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {recommendedError}
+          </p>
+        )}
+      </div>
+
       {/* Search & Tasks */}
       <SearchFilter onSearch={handleSearch} />
-      {tasks.length === 0 ? (
+      {visibleTasks.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <FiCheckCircle className="w-8 h-8 text-gray-300" />
           </div>
-          <p className="text-gray-500">Henüz görev bulunmamaktadır.</p>
+          <p className="text-gray-500">
+            {viewMode === "recommended"
+              ? "Henüz eşleşen görev bulunamadı."
+              : "Henüz görev bulunmamaktadır."}
+          </p>
         </div>
       ) : (
-        <TasksBoard tasks={tasks} />
+        <TasksBoard tasks={visibleTasks} />
       )}
     </div>
   );
