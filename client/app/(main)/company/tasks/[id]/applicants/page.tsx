@@ -20,7 +20,9 @@ import {
   FiCheck,
   FiMail,
   FiBookOpen,
+  FiCheckCircle,
 } from "react-icons/fi";
+import { reviewService } from "@/services/review.service";
 
 function formatSubmissionContent(content: string | null | undefined, fallback: string): string {
   if (!content) return fallback;
@@ -65,7 +67,18 @@ function ReviewModal({
   onUpdate: (updated: Submission) => void;
 }) {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState<"approved" | "rejected" | null>(null);
+  const [loading, setLoading] = useState<"approved" | "rejected" | "reviewing" | null>(null);
+  const [rating, setRating] = useState(5);
+  const [feedback, setFeedback] = useState("");
+  const [hasReview, setHasReview] = useState(!!submission.review);
+
+  useEffect(() => {
+    if (submission.review) {
+      setRating(submission.review.rating || 5);
+      setFeedback(submission.review.feedback || "");
+      setHasReview(true);
+    }
+  }, [submission.review]);
 
   const handle = async (status: "approved" | "rejected") => {
     setLoading(status);
@@ -79,6 +92,19 @@ function ReviewModal({
       onClose();
     } catch {
       showToast("İşlem sırasında bir hata oluştu.", "error");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleReview = async () => {
+    setLoading("reviewing");
+    try {
+      await reviewService.createReview(submission.id, { rating, feedback });
+      showToast("Değerlendirme başarıyla kaydedildi.", "success");
+      setHasReview(true);
+    } catch {
+      showToast("Değerlendirme kaydedilirken bir hata oluştu.", "error");
     } finally {
       setLoading(null);
     }
@@ -205,15 +231,68 @@ function ReviewModal({
             <button
               onClick={() => handle("rejected")}
               disabled={!!loading}
-              className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60"
+              className="fi-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60"
             >
               <FiX className="w-4 h-4" />
               {loading === "rejected" ? "İşleniyor..." : "Reddet"}
             </button>
           </div>
+        ) : submission.status === "approved" ? (
+          <div className="border-t border-gray-100 pt-5 mt-2">
+            <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <FiCheckCircle className="text-green-500" /> Öğrenci Değerlendirmesi
+            </h4>
+            
+            {hasReview ? (
+              <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                <div className="flex items-center gap-1 mb-2">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <FiCheck key={s} className={s <= rating ? "text-yellow-500" : "text-gray-300"} />
+                  ))}
+                  <span className="text-xs font-bold ml-2 text-green-700">{rating}/5</span>
+                </div>
+                <p className="text-sm text-green-800 italic">{feedback || "Geri bildirim yok."}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-2">Puan Ver</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setRating(s)}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 transition-all ${
+                          rating === s ? "border-primary bg-primary text-white" : "border-gray-100 text-gray-400 hover:border-primary/20"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-2">Geri Bildirim (Opsiyonel)</label>
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="Öğrencinin performansı hakkında not bırakın..."
+                  />
+                </div>
+                <button
+                  onClick={handleReview}
+                  disabled={!!loading}
+                  className="w-full bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50"
+                >
+                  {loading === "reviewing" ? "Kaydediliyor..." : "Değerlendirmeyi Kaydet"}
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <p className="text-center text-sm text-gray-400">
-            Bu başvuru zaten işleme alındı.
+            Bu başvuru reddedildi.
           </p>
         )}
       </div>

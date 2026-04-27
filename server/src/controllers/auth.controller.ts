@@ -89,13 +89,32 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // req.user is set by the protect middleware
-    const { password_hash, ...userWithoutPassword } = req.user;
+    const { password_hash, ...userWithoutPassword } = req.user!;
 
     res.status(200).json({
       status: 'success',
       data: {
         user: userWithoutPassword,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { current, next: newPassword } = req.body;
+
+    if (!current || !newPassword) {
+      throw new AppError('Current and new password are required', 400);
+    }
+
+    await authService.changePassword(req.user!.id, { current, next: newPassword });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Password changed successfully',
     });
   } catch (error) {
     next(error);

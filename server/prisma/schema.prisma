@@ -20,6 +20,7 @@ model User {
   // Relations
   studentProfile StudentProfile?
   companyProfile CompanyProfile?
+  supportTickets SupportTicket[]
 
   @@map("users")
 }
@@ -45,6 +46,7 @@ model StudentProfile {
   skills          StudentSkill[]
   submissions     Submission[]
   recommendations Recommendation[]
+  savedTasks      SavedTask[]
 
   @@map("student_profiles")
 }
@@ -124,6 +126,7 @@ model Task {
   // Relations
   requiredSkills TaskSkill[]
   submissions    Submission[]
+  savedTasks     SavedTask[]
 
   @@map("tasks")
 }
@@ -208,4 +211,29 @@ model Recommendation {
   student StudentProfile @relation(fields: [student_user_id], references: [user_id])
 
   @@map("recommendations")
+}
+
+model SupportTicket {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  subject    String
+  message    String
+  status     String   @default("open")
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("support_tickets")
+}
+
+model SavedTask {
+  student_user_id Int
+  task_id         Int
+  saved_at        DateTime @default(now())
+
+  student StudentProfile @relation(fields: [student_user_id], references: [user_id])
+  task    Task           @relation(fields: [task_id], references: [id])
+
+  @@id([student_user_id, task_id])
+  @@map("saved_tasks")
 }

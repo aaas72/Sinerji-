@@ -16,6 +16,7 @@ import { useToast } from "@/context/ToastContext";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { authService } from "@/services/auth.service";
 
 /* ─── küçük yardımcı bileşenler ─── */
 
@@ -141,8 +142,11 @@ export default function CompanySettingsPage() {
     }
     setPwLoading(true);
     try {
-      // TODO: await api.post('/auth/change-password', { current_password: pw.current, new_password: pw.next });
-      showToast("Şifre değiştirme özelliği yakında aktif olacak.", "error");
+      await authService.changePassword(pw.current, pw.next);
+      showToast("Şifreniz başarıyla değiştirildi.", "success");
+      setPw({ current: "", next: "", confirm: "" });
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Şifre değiştirilemedi.", "error");
     } finally {
       setPwLoading(false);
     }

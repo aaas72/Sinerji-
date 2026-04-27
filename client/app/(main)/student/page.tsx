@@ -135,7 +135,7 @@ export default function StudentDashboard() {
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#fbb049]/10 rounded-full translate-y-1/2 -translate-x-1/4" />
 
         <div className="relative z-10">
-          <p className="text-white/70 text-sm font-medium mb-1">Hoş Geldin 👋</p>
+          <p className="text-white/70 text-sm font-medium mb-1">Hoş Geldin</p>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{name}</h1>
           <p className="text-white/60 text-sm max-w-lg">
             Yeteneklerine uygun görevleri keşfet, başvur ve kariyerini inşa et.

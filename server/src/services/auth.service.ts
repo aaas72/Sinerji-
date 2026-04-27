@@ -73,4 +73,21 @@ export class AuthService {
 
     return { user, token };
   }
+
+  async changePassword(userId: number, data: { current: string; next: string }) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !(await bcrypt.compare(data.current, user.password_hash))) {
+      throw new AppError('Incorrect current password', 401);
+    }
+
+    const newPasswordHash = await bcrypt.hash(data.next, 12);
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: { password_hash: newPasswordHash },
+    });
+  }
 }

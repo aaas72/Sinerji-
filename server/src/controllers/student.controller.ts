@@ -134,3 +134,35 @@ export const getMatchingStudentsForTask = async (req: Request, res: Response, ne
     next(error);
   }
 };
+
+export const saveTask = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    await studentService.saveTask(req.user!.id, taskId);
+    res.status(200).json({ status: 'success' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unsaveTask = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    await studentService.unsaveTask(req.user!.id, taskId);
+    res.status(200).json({ status: 'success' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSavedTasks = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tasks = await studentService.getSavedTasks(req.user!.id);
+    res.status(200).json({
+      status: 'success',
+      data: { tasks },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

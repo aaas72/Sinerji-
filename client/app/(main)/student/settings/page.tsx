@@ -23,8 +23,10 @@ import {
 } from "react-icons/fi";
 import { useToast } from "@/context/ToastContext";
 import { StudentProfile, StudentSkill } from "@/types/student";
+import { authService } from "@/services/auth.service";
 
-// Profile Schema
+
+
 const studentProfileSchema = z.object({
   full_name: z.string().min(1, "Ad Soyad zorunludur"),
   university: z.string().optional(),
@@ -59,7 +61,8 @@ const studentProfileSchema = z.object({
   categories_of_interest: z.string().optional().or(z.literal("")),
 });
 
-// Skill Schema
+
+
 const addSkillSchema = z.object({
   skillName: z.string().min(1, "Yetenek adı zorunludur"),
   category: z.string().min(1, "Kategori zorunludur"),
@@ -74,9 +77,11 @@ export default function StudentSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
-  const [activeSection, setActiveSection] = useState<"profile" | "skills">(
+  const [activeSection, setActiveSection] = useState<"profile" | "skills" | "security">(
     "profile"
   );
+  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  const [pwLoading, setPwLoading] = useState(false);
   const [skillLevel, setSkillLevel] = useState(5);
   const { showToast } = useToast();
 
@@ -182,6 +187,28 @@ export default function StudentSettingsPage() {
     }
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.next !== pw.confirm) {
+      showToast("Yeni şifreler eşleşmiyor.", "error");
+      return;
+    }
+    if (pw.next.length < 6) {
+      showToast("Yeni şifre en az 6 karakter olmalıdır.", "error");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      await authService.changePassword(pw.current, pw.next);
+      showToast("Şifreniz başarıyla değiştirildi.", "success");
+      setPw({ current: "", next: "", confirm: "" });
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Şifre değiştirilemedi.", "error");
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
   if (isFetching)
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -195,6 +222,7 @@ export default function StudentSettingsPage() {
   const sectionTabs = [
     { key: "profile" as const, label: "Kişisel Bilgiler", icon: FiUser },
     { key: "skills" as const, label: "Yetenekler", icon: FiBriefcase },
+    { key: "security" as const, label: "Güvenlik", icon: FiSettings },
   ];
 
   const inputClass =
@@ -241,13 +269,15 @@ export default function StudentSettingsPage() {
         </div>
 
         <div className="p-8">
-          {/* Profile Section */}
+
+
           {activeSection === "profile" && (
             <form
               onSubmit={handleSubmit(onProfileSubmit as any)}
               className="space-y-6 max-w-2xl"
             >
-              {/* Full Name */}
+
+
               <div className="group">
                 <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2 group-focus-within:text-[#004d40] transition-colors">
                   <FiUser className="w-4 h-4" />
@@ -266,7 +296,8 @@ export default function StudentSettingsPage() {
                 )}
               </div>
 
-              {/* University */}
+
+
               <div className="group">
                 <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2 group-focus-within:text-[#004d40] transition-colors">
                   <FiBook className="w-4 h-4" />
@@ -280,7 +311,8 @@ export default function StudentSettingsPage() {
                 />
               </div>
 
-              {/* Major & Grad Year */}
+
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="group">
                   <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2 group-focus-within:text-[#004d40] transition-colors">
@@ -308,7 +340,8 @@ export default function StudentSettingsPage() {
                 </div>
               </div>
 
-              {/* Categories & Availability */}
+
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="group">
                   <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2 group-focus-within:text-[#004d40] transition-colors">
@@ -337,7 +370,8 @@ export default function StudentSettingsPage() {
                 </div>
               </div>
 
-              {/* Bio */}
+
+
               <div className="group">
                 <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2 group-focus-within:text-[#004d40] transition-colors">
                   <FiFileText className="w-4 h-4" />
@@ -356,7 +390,8 @@ export default function StudentSettingsPage() {
                 )}
               </div>
 
-              {/* Phone */}
+
+
               <div className="group">
                 <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2 group-focus-within:text-[#004d40] transition-colors">
                   <FiPhone className="w-4 h-4" />
@@ -370,7 +405,8 @@ export default function StudentSettingsPage() {
                 />
               </div>
 
-              {/* Social Links */}
+
+
               <div className="pt-4 border-t border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-800 mb-4">
                   Sosyal Bağlantılar
@@ -464,10 +500,12 @@ export default function StudentSettingsPage() {
             </form>
           )}
 
-          {/* Skills Section */}
+
+
           {activeSection === "skills" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-              {/* Add Skill Form */}
+
+
               <div>
                 <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-100">
                   <h3 className="font-semibold text-gray-900 mb-1">
@@ -518,7 +556,8 @@ export default function StudentSettingsPage() {
                       )}
                     </div>
 
-                    {/* Skill Level Indicator */}
+
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Seviye <span className="text-red-500">*</span>
@@ -563,7 +602,8 @@ export default function StudentSettingsPage() {
                 </div>
               </div>
 
-              {/* Skills List */}
+
+
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">
                   Yeteneklerim
@@ -597,7 +637,6 @@ export default function StudentSettingsPage() {
                                 <span className="text-sm text-gray-700">
                                   {skill.skill.name}
                                 </span>
-                                {/* Signal bars for level */}
                                 <span className="flex items-end gap-0.5" title={`Seviye: ${skill.level}/10`}>
                                   {[1,2,3,4,5].map(i => (
                                     <span key={i} style={{ width: 3, height: 4 + i * 2, borderRadius: 2, backgroundColor: i <= filled ? color : "#e5e7eb", display: "inline-block", transition: "background-color 0.2s" }} />
@@ -627,6 +666,73 @@ export default function StudentSettingsPage() {
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeSection === "security" && (
+            <div className="max-w-md space-y-8">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Şifre Değiştir</h3>
+                <p className="text-sm text-gray-500">Güvenliğiniz için düzenli aralıklarla şifrenizi güncelleyin.</p>
+              </div>
+
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Mevcut Şifre</label>
+                  <input
+                    type="password"
+                    value={pw.current}
+                    onChange={(e) => setPw({ ...pw, current: e.target.value })}
+                    className={inputClass}
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Yeni Şifre</label>
+                  <input
+                    type="password"
+                    value={pw.next}
+                    onChange={(e) => setPw({ ...pw, next: e.target.value })}
+                    className={inputClass}
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Yeni Şifre (Tekrar)</label>
+                  <input
+                    type="password"
+                    value={pw.confirm}
+                    onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
+                    className={inputClass}
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full py-3 mt-4"
+                  isLoading={pwLoading}
+                >
+                  Şifreyi Güncelle
+                </Button>
+              </form>
+
+              <div className="pt-8 border-t border-gray-100">
+                <h3 className="text-sm font-bold text-red-600 mb-2">Hesabı Devre Dışı Bırak</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Hesabınızı devre dışı bıraktığınızda profiliniz şirketler tarafından görünmez hale gelir.
+                </p>
+                <button 
+                  type="button"
+                  className="text-sm font-semibold text-red-500 hover:text-red-700 transition-colors"
+                  onClick={() => showToast("Bu özellik yakında eklenecektir.", "info")}
+                >
+                  Hesabımı Pasife Al
+                </button>
               </div>
             </div>
           )}

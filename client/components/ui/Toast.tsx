@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiCheckCircle, FiAlertCircle, FiX } from "react-icons/fi";
+import { FiCheckCircle, FiAlertCircle, FiX, FiInfo } from "react-icons/fi";
 
-export type ToastType = "success" | "error";
+export type ToastType = "success" | "error" | "info" | "warning";
 
 interface ToastProps {
   message: string;
@@ -44,21 +44,29 @@ export default function Toast({ message, type, onClose }: ToastProps) {
         className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg border ${
           type === "success"
             ? "bg-white border-green-100 text-green-700"
-            : "bg-white border-red-100 text-red-700"
+            : type === "error"
+            ? "bg-white border-red-100 text-red-700"
+            : type === "warning"
+            ? "bg-white border-yellow-100 text-yellow-700"
+            : "bg-white border-blue-100 text-blue-700"
         } cursor-pointer min-w-[300px]`}
-        onClick={type === "error" ? handleClose : undefined}
+        onClick={type !== "success" ? handleClose : undefined}
       >
         <div className="shrink-0">
           {type === "success" ? (
             <FiCheckCircle size={24} className="text-[#004d40]" />
-          ) : (
+          ) : type === "error" ? (
             <FiAlertCircle size={24} className="text-red-500" />
+          ) : type === "warning" ? (
+            <FiAlertCircle size={24} className="text-yellow-500" />
+          ) : (
+            <FiInfo size={24} className="text-blue-500" />
           )}
         </div>
         <div className="grow">
           <p className="font-medium text-sm">{message}</p>
         </div>
-        {type === "error" && (
+        {(type === "error" || type === "info" || type === "warning") && (
           <button
             onClick={(e) => {
               e.stopPropagation();

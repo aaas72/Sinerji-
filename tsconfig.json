@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@prisma/client": ["./server/node_modules/@prisma/client"],
+      "*": ["./server/node_modules/*"]
+    }
+  },
+  "include": ["scripts/**/*"]
+}

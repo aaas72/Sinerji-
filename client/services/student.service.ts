@@ -41,5 +41,18 @@ export const studentService = {
   async getMyStats(): Promise<StudentStats> {
     const response = await api.get<ApiResponse<StatsData>>('/students/me/stats');
     return response.data.data.stats;
+  },
+
+  async getSavedTasks(): Promise<any[]> {
+    const response = await api.get<ApiResponse<{ tasks: any[] }>>('/students/saved-tasks');
+    return response.data.data.tasks;
+  },
+
+  async saveTask(taskId: number): Promise<void> {
+    await api.post(`/students/tasks/${taskId}/save`);
+  },
+
+  async unsaveTask(taskId: number): Promise<void> {
+    await api.delete(`/students/tasks/${taskId}/save`);
   }
 };

@@ -41,7 +41,8 @@ interface DashboardStats {
   }[];
 }
 
-/* ── küçük yardımcılar ── */
+
+
 
 function KpiCard({
   icon: Icon,
@@ -101,7 +102,8 @@ function formatDate(iso: string) {
   });
 }
 
-/* ── ana sayfa ── */
+
+
 
 export default function CompanyDashboardPage() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
@@ -150,7 +152,8 @@ export default function CompanyDashboardPage() {
 
   return (
     <div className="space-y-5">
-      {/* ekmek kırıntısı */}
+
+
       <Breadcrumb
         items={[
           { label: "Ana Sayfa", href: "/company/dashboard" },
@@ -158,7 +161,8 @@ export default function CompanyDashboardPage() {
         ]}
       />
 
-      {/* karşılama + hızlı eylem */}
+
+
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm text-gray-500">
@@ -172,7 +176,8 @@ export default function CompanyDashboardPage() {
         </Link>
       </div>
 
-      {/* KPI kartları */}
+
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiCard icon={FiBriefcase}   label="Aktif Görev"     value={stats.activeTasks}        sub={`${stats.totalTasks} toplam`} />
         <KpiCard icon={FiUsers}       label="Başvuru"          value={stats.totalApplications}  />
@@ -181,10 +186,12 @@ export default function CompanyDashboardPage() {
         <KpiCard icon={FiTrendingUp}  label="Tamamlanma %"     value={completionRate}            sub="görev bazlı" />
       </div>
 
-      {/* iki sütun içerik */}
+
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* sol: son başvurular */}
+
+
         <div className="lg:col-span-2">
           <MainSection
             title="Son Başvurular"
@@ -229,7 +236,8 @@ export default function CompanyDashboardPage() {
           </MainSection>
         </div>
 
-        {/* sağ: son görevler */}
+
+
         <div className="lg:col-span-1">
           <MainSection
             title="Son Görevler"

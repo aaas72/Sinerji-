@@ -1,9 +1,10 @@
+// Student service for profile and task management
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import { updateStudentProfileSchema, addSkillSchema } from '../utils/validation';
 import { z } from 'zod';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient() as any;
 
 export class StudentService {
   async getProfile(userId: number) {
@@ -194,5 +195,50 @@ export class StudentService {
       averageRating: reviews._avg.rating || 0,
       badgesEarned: badgesEarnedCount,
     };
+  }
+
+  async saveTask(userId: number, taskId: number) {
+    return prisma.savedTask.upsert({
+      where: {
+        student_user_id_task_id: {
+          student_user_id: userId,
+          task_id: taskId,
+        },
+      },
+      update: {},
+      create: {
+        student_user_id: userId,
+        task_id: taskId,
+      },
+    });
+  }
+
+  async unsaveTask(userId: number, taskId: number) {
+    return prisma.savedTask.delete({
+      where: {
+        student_user_id_task_id: {
+          student_user_id: userId,
+          task_id: taskId,
+        },
+      },
+    });
+  }
+
+  async getSavedTasks(userId: number) {
+    const saved = await prisma.savedTask.findMany({
+      where: { student_user_id: userId },
+      include: {
+        task: {
+          include: {
+            company: true,
+            requiredSkills: {
+              include: { skill: true }
+            }
+          }
+        }
+      },
+      orderBy: { saved_at: 'desc' }
+    });
+    return saved.map((s: any) => s.task);
   }
 }

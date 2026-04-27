@@ -44,6 +44,7 @@ const editTaskSchema = z.object({
   preferred_major: z.string().optional(),
   work_type: z.string().min(1, "Çalışma tipi zorunludur"),
   deadline: z.string().optional(),
+  status: z.enum(["open", "review", "in_progress", "closed"]).optional(),
 });
 
 type EditTaskFormData = z.infer<typeof editTaskSchema>;
@@ -107,7 +108,7 @@ export default function EditTaskPage() {
         if (task.positions) setValue("positions", Number(task.positions));
         if (task.experience_level) setValue("experience_level", task.experience_level);
         if (task.work_type) setValue("work_type", task.work_type);
-        if (task.preferred_major) setValue("preferred_major", task.preferred_major);
+        if (task.status) setValue("status", task.status as any);
 
         if (task.budget) setValue("budget", String(task.budget));
         if (task.currency) setValue("currency", task.currency);
@@ -208,7 +209,7 @@ export default function EditTaskPage() {
         deadline: data.deadline ? new Date(data.deadline).toISOString() : undefined,
       };
       await taskService.updateTask(taskId, payload);
-      router.push("/company/tasks");
+      router.push(`/company/tasks/${taskId}`);
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } }, message?: string };
       console.error("Task update error:", error);
@@ -261,8 +262,21 @@ export default function EditTaskPage() {
         }
       >
         {/* ── Category & Subcategory ─────────────────────────────────────── */}
-        <FormSection title="Kategori Bilgileri">
-          <FormRow cols={2}>
+        <FormSection title="Görev Durumu & Kategori">
+          <FormRow cols={3}>
+            <FormSelect
+              label="Görev Durumu"
+              name="status"
+              options={[
+                { value: "open", label: "Başvurulara Açık" },
+                { value: "review", label: "İnceleniyor" },
+                { value: "in_progress", label: "Devam Ediyor" },
+                { value: "closed", label: "Tamamlandı / Kapalı" },
+              ]}
+              value={watch("status") || "open"}
+              onChange={(val) => setValue("status", val as any)}
+              required
+            />
             <FormSelect
               label="Kategori"
               name="category"

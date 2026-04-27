@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ApplicationCard, {
   ApplicationStatus,
   RewardType,
@@ -11,6 +11,7 @@ import {
   FiCheckCircle,
   FiInbox,
 } from "react-icons/fi";
+import { submissionService } from "@/services/submission.service";
 
 type Application = {
   id: number;
@@ -22,56 +23,6 @@ type Application = {
   rewardType?: RewardType;
 };
 
-const applications: Application[] = [
-  {
-    id: 1,
-    title:
-      "Üniversite Öğrencilerine Yönelik Finans Uygulaması için Logo Tasarımı",
-    tags: ["Adobe Illustrator", "Adobe Illustrator", "Adobe Illustrator"],
-    companyName: "Fide Finans",
-    date: "2 Gün önce",
-    status: "İnceleniyor",
-    rewardType: "Money",
-  },
-  {
-    id: 2,
-    title:
-      "Üniversite Öğrencilerine Yönelik Finans Uygulaması için Logo Tasarımı",
-    tags: ["Adobe Illustrator", "Adobe Illustrator", "Adobe Illustrator"],
-    companyName: "Fide Finans",
-    date: "2 Gün önce",
-    status: "İnceleniyor",
-    rewardType: "Internship",
-  },
-  {
-    id: 3,
-    title: "Mobil Uygulama Arayüz Tasarımı",
-    tags: ["Figma", "UI/UX", "Prototyping"],
-    companyName: "TeknoSoft",
-    date: "5 Gün önce",
-    status: "Bekliyor",
-    rewardType: "Certificate",
-  },
-  {
-    id: 4,
-    title: "E-Ticaret Sitesi Geliştirme",
-    tags: ["React", "Next.js", "Tailwind"],
-    companyName: "Marketim",
-    date: "1 Hafta önce",
-    status: "Kabul Edildi",
-    rewardType: "Recommendation",
-  },
-  {
-    id: 5,
-    title: "Kurumsal Kimlik Tasarımı",
-    tags: ["Photoshop", "Illustrator", "Branding"],
-    companyName: "Global Corp",
-    date: "2 Hafta önce",
-    status: "Reddedildi",
-    rewardType: "Experience",
-  },
-];
-
 const tabs = [
   { key: "Beklemede", label: "Beklemede", icon: FiClock },
   { key: "Devam Eden", label: "Devam Eden", icon: FiPlay },
@@ -80,6 +31,43 @@ const tabs = [
 
 export default function ApplicationsPage() {
   const [activeTab, setActiveTab] = useState("Beklemede");
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const subs = await submissionService.getMySubmissions();
+        const mapped: Application[] = subs.map((s: any) => ({
+          id: s.id,
+          title: s.task.title,
+          tags: s.task.requiredSkills.map((sk: any) => sk.skill.name),
+          companyName: s.task.company.company_name,
+          date: new Date(s.submitted_at).toLocaleDateString("tr-TR"),
+          status: mapBackendStatus(s.status),
+          rewardType: s.task.reward_type as RewardType,
+        }));
+        setApplications(mapped);
+      } catch (error) {
+        console.error("Failed to fetch applications:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, []);
+
+  const mapBackendStatus = (status: string): ApplicationStatus => {
+    switch (status?.toLowerCase()) {
+      case "pending": return "Bekliyor";
+      case "reviewing": return "İnceleniyor";
+      case "approved":
+      case "accepted": return "Kabul Edildi";
+      case "rejected": return "Reddedildi";
+      default: return "Bekliyor";
+    }
+  };
 
   const filteredApplications = applications.filter((app) => {
     if (activeTab === "Beklemede") {
@@ -92,9 +80,16 @@ export default function ApplicationsPage() {
     return true;
   });
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Başvurularım</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -102,9 +97,7 @@ export default function ApplicationsPage() {
         </p>
       </div>
 
-      {/* Tabs & Content Card */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        {/* Tabs */}
         <div className="flex border-b border-gray-100 px-2">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
@@ -147,7 +140,6 @@ export default function ApplicationsPage() {
           })}
         </div>
 
-        {/* Content */}
         <div className="p-6">
           {filteredApplications.length > 0 ? (
             <div className="space-y-4">
@@ -170,9 +162,6 @@ export default function ApplicationsPage() {
               </div>
               <p className="text-gray-500 font-medium">
                 Bu kategoride başvuru bulunmamaktadır.
-              </p>
-              <p className="text-gray-400 text-sm mt-1">
-                Yeni görevlere göz atarak başvuru yapabilirsiniz.
               </p>
             </div>
           )}

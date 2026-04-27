@@ -22,7 +22,8 @@ import SkillBadge from "@/components/ui/SkillBadge";
 import TaskCard from "@/components/ui/cards/TaskCard";
 import RecommendationCard from "@/components/ui/cards/RecommendationCard";
 
-// Helper to map backend skills to frontend structure
+
+
 const transformSkills = (skills: StudentSkill[]) => {
   const grouped: Record<string, { name: string; level: number }[]> = {};
 
@@ -136,12 +137,14 @@ export default function ProfilePage() {
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Profile Header Card */}
       <div className="relative bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        {/* Cover Gradient */}
+
+
         <div className="h-36 bg-linear-to-br from-[#004d40] via-[#00695c] to-[#004d40] relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
           <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-[#fbb049]/10 rounded-full translate-y-1/2" />
 
-          {/* Edit Button */}
+
+
           <Link
             href="/student/settings"
             className="absolute top-4 right-4 flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-xl text-sm font-medium text-white hover:bg-white/25 transition-all"
@@ -151,9 +154,11 @@ export default function ProfilePage() {
           </Link>
         </div>
 
-        {/* Profile Info */}
+
+
         <div className="px-8 pb-8">
-          {/* Avatar */}
+
+
           <div className="-mt-16 mb-5 relative z-10">
             <div className="w-28 h-28 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
               <span className="text-4xl font-bold text-[#004d40]">
@@ -163,7 +168,8 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Left Info */}
+
+
             <div className="flex-1 space-y-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center flex-wrap gap-3">
@@ -190,7 +196,8 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Contact Details */}
+
+
               <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1.5">
                   <FiMail className="w-4 h-4 text-gray-400" />
@@ -204,7 +211,8 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Social Icons */}
+
+
               <div className="flex gap-2">
                 {profile.linkedin_url && (
                   <a
@@ -248,14 +256,16 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Bio */}
+
+
               {profile.bio && (
                 <p className="text-gray-600 text-sm leading-relaxed pt-2 border-t border-gray-100">
                   {profile.bio}
                 </p>
               )}
 
-              {/* Interest Categories */}
+
+
               {profile.categories_of_interest && (
                 <div className="pt-4 border-t border-gray-100">
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">İlgi Alanları & Odak</h3>
@@ -270,7 +280,8 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Right: Stats Cards (نفس تصميم الداشبورد) */}
+
+
             <div className="grid grid-cols-2 md:grid-cols-2 gap-4 lg:min-w-[320px]">
               {statItems.map((stat) => (
                 <div
@@ -368,7 +379,8 @@ export default function ProfilePage() {
                 text={rec.content}
                 recommenderName={rec.company.company_name}
                 recommenderTitle={rec.company.industry || "Şirket Temsilcisi"}
-                rating={5}
+                rating={rec.rating || 5}
+
               />
             ))
           ) : (

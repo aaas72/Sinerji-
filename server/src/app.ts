@@ -19,6 +19,8 @@ import reviewRoutes from './routes/review.routes';
 import badgeRoutes from './routes/badge.routes';
 import recommendationRoutes from './routes/recommendation.routes';
 import skillRoutes from './routes/skill.routes';
+import publicRoutes from './routes/public.routes';
+import supportRoutes from './routes/support.routes';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -48,7 +50,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
+app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
+
 app.use('/api/students', studentRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/tasks', taskRoutes);
@@ -57,6 +61,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/skills', skillRoutes);
+app.use('/api/support', supportRoutes);
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to the Backend API' });
 });
