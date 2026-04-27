@@ -85,3 +85,20 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
     next(error);
   }
 };
+
+export const getMe = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // req.user is set by the protect middleware
+    const { password_hash, ...userWithoutPassword } = req.user;
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: userWithoutPassword,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

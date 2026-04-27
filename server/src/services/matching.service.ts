@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import logger from '../utils/logger';
 
 const prisma = new PrismaClient();
+const DEFAULT_MATCHING_SERVICE_URL = 'http://localhost:8001';
 
 type ScoreStudentTaskResponse = {
   task_id: number;
@@ -53,11 +54,12 @@ type RecommendTasksResponse = {
 
 // Matching Service to calculate match percentages between students and tasks
 export class MatchingService {
-  private readonly matchingServiceUrl = (process.env.MATCHING_SERVICE_URL || '').trim();
+  private readonly configuredMatchingServiceUrl = (process.env.MATCHING_SERVICE_URL || '').trim();
   private readonly matchingTimeoutMs = Number(process.env.MATCHING_SERVICE_TIMEOUT_MS || 5000);
   private readonly matchingAlpha = process.env.MATCHING_ALPHA ? Number(process.env.MATCHING_ALPHA) : undefined;
   private readonly matchingTopK = process.env.MATCHING_TOP_K ? Number(process.env.MATCHING_TOP_K) : undefined;
   private readonly matchingMinScore = process.env.MATCHING_MIN_SCORE ? Number(process.env.MATCHING_MIN_SCORE) : undefined;
+  private hasWarnedDefaultMatchingUrl = false;
 
   private buildRuntimeConfig() {
     const config: { alpha?: number; top_k?: number; min_score?: number } = {};
@@ -82,11 +84,18 @@ export class MatchingService {
   }
 
   private getBaseUrl(): string {
-    if (!this.matchingServiceUrl) {
-      throw new AppError('MATCHING_SERVICE_URL is required to use matching microservice', 500);
+    const resolvedUrl = this.configuredMatchingServiceUrl || DEFAULT_MATCHING_SERVICE_URL;
+
+    if (!this.configuredMatchingServiceUrl && !this.hasWarnedDefaultMatchingUrl) {
+      logger.warn(`MATCHING_SERVICE_URL is not set. Falling back to ${DEFAULT_MATCHING_SERVICE_URL}`);
+      this.hasWarnedDefaultMatchingUrl = true;
     }
 
-    return this.matchingServiceUrl.replace(/\/+$/, '');
+    if (!/^https?:\/\//i.test(resolvedUrl)) {
+      throw new AppError('MATCHING_SERVICE_URL must start with http:// or https://', 500);
+    }
+
+    return resolvedUrl.replace(/\/+$/, '');
   }
 
   private async postJson<TResponse>(endpoint: string, body: unknown): Promise<TResponse> {
@@ -110,6 +119,7 @@ export class MatchingService {
       return (await response.json()) as TResponse;
     } catch (error) {
       logger.error('Matching microservice call failed', {
+        url,
         endpoint,
         error: error instanceof Error ? error.message : String(error),
       });

@@ -7,6 +7,7 @@ from collections import Counter
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import psycopg
 from dotenv import load_dotenv
@@ -15,7 +16,15 @@ from pydantic import BaseModel, Field
 
 load_dotenv()
 
-DATABASE_URL = (os.getenv("DATABASE_URL") or "").strip()
+def normalize_database_url(raw_url: str) -> str:
+    """Strip Prisma-specific params (e.g. schema) not understood by psycopg."""
+    parts = urlsplit(raw_url)
+    query_items = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k.lower() != "schema"]
+    normalized_query = urlencode(query_items)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, normalized_query, parts.fragment))
+
+
+DATABASE_URL = normalize_database_url((os.getenv("DATABASE_URL") or "").strip())
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is required for AI matching microservice")
 

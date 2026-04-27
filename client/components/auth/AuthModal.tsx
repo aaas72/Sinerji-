@@ -47,9 +47,15 @@ export default function AuthModal() {
   const handleSuccess = (user: User) => {
     loginAction(user);
     close();
-    if (user.role === "student") router.push("/student");
-    else router.push("/company/dashboard");
+    
+    // استخدام window.location.href بدلاً من router.push لضمان إعادة تحميل الصفحة
+    // والتأكد من أن المتصفح يتعرف على الـ Cookies الجديدة قبل طلب البيانات في لوحة التحكم
+    const userRole = user.role.toLowerCase();
+    const destination = userRole === "student" ? "/student" : "/company/dashboard";
+    window.location.href = destination;
   };
+
+
 
   return (
     <div

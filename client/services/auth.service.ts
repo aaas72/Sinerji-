@@ -26,5 +26,11 @@ export const authService = {
 
     async logout() {
         await api.post('/auth/logout');
+    },
+
+    async getMe(): Promise<User> {
+        const response = await api.get<ApiResponse<AuthData>>('/auth/me');
+        return response.data.data.user;
     }
 };
+

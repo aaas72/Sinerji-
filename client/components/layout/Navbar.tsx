@@ -77,32 +77,36 @@ const companyNavbarLinks = [
   { href: "/company/tasks", label: "Görevlerim" },
 ];
 
-export default function Navbar() {
+type NavbarProps = {
+  authenticated: boolean;
+  userName?: string;
+  role?: "student" | "company" | "guest";
+};
+
+export default function Navbar({ authenticated, userName, role }: NavbarProps) {
+
   const { user, isAuthenticated, logout, _hasHydrated } = useAuthStore();
   const { openLogin, openRegister } = useAuthModal();
-  const [role, setRole] = useState<string | null>(null);
   const pathname = usePathname();
-
-  useEffect(() => {
-    if (_hasHydrated && user) {
-      setRole(user.role);
-    }
-  }, [_hasHydrated, user]);
 
   const isAuth = isAuthenticated && !!user;
   const name =
-    (user as any)?.full_name || (user as any)?.company_name || "User";
+    userName || (user && (typeof user === "object" && "full_name" in user ? (user.full_name as string) : undefined))
+    || (user && (typeof user === "object" && "company_name" in user ? (user.company_name as string) : undefined))
+    || "User";
 
-  const menuItems = role === "company" ? companyMenuItems : studentMenuItems;
+  const userRole = (role || user?.role || "guest").toLowerCase();
+  const menuItems = userRole === "company" ? companyMenuItems : studentMenuItems;
   const navbarLinks =
-    role === "company" ? companyNavbarLinks : studentNavbarLinks;
+    userRole === "company" ? companyNavbarLinks : studentNavbarLinks;
 
   const homeLink =
-    role === "student"
+    userRole === "student"
       ? "/student"
-      : role === "company"
+      : userRole === "company"
       ? "/company/dashboard"
       : "/";
+
 
   const router = useRouter();
   const handleLogout = () => {

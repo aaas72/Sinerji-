@@ -89,7 +89,6 @@ export default function MyTasksPage() {
             filteredTasks.map((task) => (
               <CompanyTaskCard
                 key={task.id}
-                id={task.id}
                 title={task.title}
                 description={task.description || ""}
                 date={new Date(task.deadline || task.id).toLocaleDateString()} // Use deadline or fallback

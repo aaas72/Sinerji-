@@ -5,7 +5,8 @@
   "scripts": {
     "test": "npm run test:matching",
     "test:auth": "ts-node test-auth.ts",
-    "test:matching": "ts-node task-tests.ts"
+    "test:matching": "ts-node task-tests.ts",
+    "seed:ai-ranking": "ts-node seed-10-students.ts"
   },
   "keywords": [],
   "author": "",

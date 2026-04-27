@@ -150,7 +150,7 @@ export default function CompanySettingsPage() {
 
   const handleLogout = () => {
     logout();
-    router.push("/login");
+    router.push("/");
   };
 
   return (

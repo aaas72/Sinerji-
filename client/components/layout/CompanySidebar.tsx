@@ -23,7 +23,7 @@ const CompanySidebar = () => {
 
   const handleLogout = () => {
     logout();
-    router.replace("/login");
+    router.replace("/");
   };
   return (
     <aside className="hidden md:flex flex-col w-56 min-h-screen bg-linear-to-b from-[#00695c] via-[#00695c] to-[#004d40] border-r border-gray-100 py-4 px-4 fixed top-0 left-0 z-30">

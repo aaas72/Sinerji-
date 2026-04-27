@@ -1,3 +1,16 @@
+// Extend the Window interface for custom properties used below
+declare global {
+  interface Window {
+    __zustandStore?: {
+      logout?: () => void;
+    };
+    useAuthStore?: {
+      getState?: () => {
+        logout?: () => void;
+      };
+    };
+  }
+}
 import axios, { AxiosError } from 'axios';
 import { ApiError } from '@/types/api';
 
@@ -33,14 +46,24 @@ api.interceptors.response.use(
       errorMessage = error.response.data?.message || error.response.data?.error || error.message;
 
       if (statusCode === 401) {
-        console.error('Unauthorized! Clearing local auth state.');
+        if (typeof window !== 'undefined' && window.location.pathname === '/') {
+          // لا تطبع الرسالة إذا كان المستخدم في صفحة تسجيل الدخول
+        } else {
+          console.error('Unauthorized! Clearing local auth state.');
+        }
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth-storage');
-        }
-        // Redirect to landing page if not already there
-        if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-          // Use replaceState to avoid back navigation to protected page
-          window.location.replace('/');
+          try {
+            // استدعاء دالة تسجيل الخروج من zustand store إذا كانت متاحة
+            window.__zustandStore?.logout?.();
+            window.useAuthStore?.getState?.().logout?.();
+          } catch (e) {
+            // تجاهل أي خطأ في محاولة استدعاء logout
+          }
+          // إعادة التوجيه لصفحة تسجيل الدخول
+          if (window.location.pathname !== '/') {
+            window.location.replace('/');
+          }
         }
       }
     } else if (error.request) {

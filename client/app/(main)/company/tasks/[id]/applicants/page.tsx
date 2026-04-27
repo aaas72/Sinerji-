@@ -22,6 +22,38 @@ import {
   FiBookOpen,
 } from "react-icons/fi";
 
+function formatSubmissionContent(content: string | null | undefined, fallback: string): string {
+  if (!content) return fallback;
+
+  // Remove tags first, then decode entities for a clean plain-text preview.
+  const withoutTags = content
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ");
+
+  let decoded = withoutTags;
+  if (typeof window !== "undefined") {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = withoutTags;
+    decoded = textarea.value;
+  } else {
+    decoded = withoutTags
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'");
+  }
+
+  const normalized = decoded
+    .replace(/^\s*\[\s*BAŞVURU\s+MEKTUBU\s*\]\s*:\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return normalized || fallback;
+}
+
 /* ── Review Modal ── */
 function ReviewModal({
   submission,
@@ -144,7 +176,7 @@ function ReviewModal({
             Başvuru İçeriği
           </p>
           <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-            {submission.submission_content || "İçerik belirtilmemiş."}
+            {formatSubmissionContent(submission.submission_content, "İçerik belirtilmemiş.")}
           </p>
         </div>
 
@@ -198,6 +230,10 @@ export default function TaskApplicantsPage() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Submission | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [minAiScore, setMinAiScore] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"ai_desc" | "ai_asc" | "newest" | "oldest">("ai_desc");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -208,7 +244,9 @@ export default function TaskApplicantsPage() {
           taskService.getTaskById(taskId),
           submissionService.getTaskSubmissions(taskId),
         ]);
-        const sortedSubmissions = submissionsData.sort((a: any, b: any) => (b.ai_match_score || 0) - (a.ai_match_score || 0));
+        const sortedSubmissions = [...submissionsData].sort(
+          (a: Submission, b: Submission) => (b.ai_match_score || 0) - (a.ai_match_score || 0)
+        );
         setTask(taskData);
         setSubmissions(sortedSubmissions);
       } catch (error) {
@@ -226,6 +264,38 @@ export default function TaskApplicantsPage() {
       prev.map((s) => (s.id === updated.id ? updated : s))
     );
   };
+
+  const minAiScoreNumber = minAiScore === "" ? null : Number(minAiScore);
+
+  const filteredSubmissions = submissions
+    .filter((submission) => {
+      const fullName = submission.student.full_name.toLowerCase();
+      const email = submission.student.user.email.toLowerCase();
+      const query = searchQuery.trim().toLowerCase();
+
+      const matchesQuery =
+        query.length === 0 ||
+        fullName.includes(query) ||
+        email.includes(query);
+
+      const matchesStatus =
+        statusFilter === "all" || submission.status === statusFilter;
+
+      const score = typeof submission.ai_match_score === "number" ? submission.ai_match_score : 0;
+      const matchesScore =
+        minAiScoreNumber === null ||
+        (!Number.isNaN(minAiScoreNumber) && score >= minAiScoreNumber);
+
+      return matchesQuery && matchesStatus && matchesScore;
+    })
+    .sort((a, b) => {
+      if (sortBy === "ai_desc") return (b.ai_match_score || 0) - (a.ai_match_score || 0);
+      if (sortBy === "ai_asc") return (a.ai_match_score || 0) - (b.ai_match_score || 0);
+
+      const dateA = new Date(a.submitted_at || Date.now()).getTime();
+      const dateB = new Date(b.submitted_at || Date.now()).getTime();
+      return sortBy === "newest" ? dateB - dateA : dateA - dateB;
+    });
 
   if (loading)
     return (
@@ -257,9 +327,9 @@ export default function TaskApplicantsPage() {
           <div>
             <h2 className="text-base font-semibold text-gray-900">
               Başvuru Listesi
-              {submissions.length > 0 && (
+              {filteredSubmissions.length > 0 && (
                 <span className="ml-2 text-xs font-normal text-gray-400">
-                  ({submissions.length} başvuru)
+                  ({filteredSubmissions.length} başvuru)
                 </span>
               )}
             </h2>
@@ -278,14 +348,58 @@ export default function TaskApplicantsPage() {
           </Button>
         </div>
 
-        {submissions.length === 0 ? (
+        <div className="bg-white border border-gray-100 rounded-xl p-4 mb-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="İsim veya e-posta ara"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as "all" | "pending" | "approved" | "rejected")}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="all">Tüm Durumlar</option>
+              <option value="pending">Bekliyor</option>
+              <option value="approved">Onaylandı</option>
+              <option value="rejected">Reddedildi</option>
+            </select>
+
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={minAiScore}
+              onChange={(e) => setMinAiScore(e.target.value)}
+              placeholder="Min. AI Skor (%)"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "ai_desc" | "ai_asc" | "newest" | "oldest")}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="ai_desc">AI Skoru (Yüksekten Düşüğe)</option>
+              <option value="ai_asc">AI Skoru (Düşükten Yükseğe)</option>
+              <option value="newest">En Yeni Başvurular</option>
+              <option value="oldest">En Eski Başvurular</option>
+            </select>
+          </div>
+        </div>
+
+        {filteredSubmissions.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <FiUser size={48} className="mx-auto mb-4 text-gray-300" />
-            <p>Henüz başvuru bulunmamaktadır.</p>
+            <p>{submissions.length === 0 ? "Henüz başvuru bulunmamaktadır." : "Filtreye uygun başvuru bulunamadı."}</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {submissions.map((submission) => (
+            {filteredSubmissions.map((submission) => (
               <div
                 key={submission.id}
                 className="border border-gray-100 rounded-xl p-6 hover:shadow-md transition-shadow bg-white"
@@ -364,7 +478,7 @@ export default function TaskApplicantsPage() {
 
                 <div className="mt-4 pt-4 border-t border-gray-50 mb-4">
                   <p className="text-gray-600 text-sm line-clamp-2 italic">
-                    {submission.submission_content || "İçerik yok"}
+                    {formatSubmissionContent(submission.submission_content, "İçerik yok")}
                   </p>
                 </div>
               </div>

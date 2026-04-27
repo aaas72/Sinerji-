@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import logger from './utils/logger';
 import { errorHandler } from './middlewares/error.middleware';
@@ -19,14 +20,14 @@ import badgeRoutes from './routes/badge.routes';
 import recommendationRoutes from './routes/recommendation.routes';
 import skillRoutes from './routes/skill.routes';
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const prisma = new PrismaClient();
 
 // Middleware
 app.use(cors({
-    origin: true, // Allow all origins for development to avoid CORS issues
+    origin: 'http://localhost:3000', // Explicitly allow frontend origin
     credentials: true
 }));
 app.use(helmet());

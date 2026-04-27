@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
+import ClientWrapper from "@/components/ClientWrapper";
 import "./globals.css";
+
 import { ToastProvider } from "@/context/ToastContext";
+
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -21,15 +24,13 @@ export const metadata: Metadata = {
   description: "Öğrenciler ve şirketler için yetenek tabanlı görev ve staj platformu.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr" dir="ltr">
-      <body
-        className={`${inter.variable} ${poppins.variable} font-body text-text`}
-      >
-        <ToastProvider>{children}</ToastProvider>
+      <body className={`${inter.variable} ${poppins.variable} font-body text-text`}>
+        <ToastProvider>
+          <ClientWrapper>{children}</ClientWrapper>
+        </ToastProvider>
       </body>
     </html>
   );
