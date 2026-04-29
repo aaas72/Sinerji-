@@ -201,44 +201,81 @@ function ReviewModal({
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
             Başvuru İçeriği
           </p>
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-            {formatSubmissionContent(submission.submission_content, "İçerik belirtilmemiş.")}
-          </p>
+          <div className="max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {formatSubmissionContent(submission.submission_content, "İçerik belirtilmemiş.")}
+            </p>
+          </div>
         </div>
 
         {/* AI Analysis Details */}
         {submission.ai_match_details && (
-          <div className="bg-primary/5 rounded-xl p-4 mb-5 border border-primary/10">
-            <p className="text-xs font-bold text-primary uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              AI Analiz Raporu
-            </p>
+          <div className="bg-primary/5 rounded-xl p-5 mb-5 border border-primary/10 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                AI Detaylı Analiz Raporu
+              </p>
+              {submission.ai_match_details.score > 0 && (
+                <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
+                  Genel Uyumluluk: %{submission.ai_match_details.score}
+                </span>
+              )}
+            </div>
             
-            <div className="space-y-4">
-              {/* Reasons */}
-              {submission.ai_match_details.reasons && submission.ai_match_details.reasons.length > 0 && (
+            <div className="space-y-5">
+              {/* Skill Matrix (Structured) */}
+              {submission.ai_match_details.skill_details && submission.ai_match_details.skill_details.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase mb-1.5">Analiz Notları</p>
-                  <ul className="space-y-1.5">
-                    {submission.ai_match_details.reasons.map((reason, idx) => (
-                      <li key={idx} className="text-sm text-gray-700 flex items-start gap-2 leading-snug">
-                        <span className="text-primary mt-1">•</span>
-                        {reason}
-                      </li>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase mb-2.5 flex items-center gap-1">
+                    <FiCheckCircle className="w-3 h-3" /> Beceri Eşleşme Matrisi
+                  </p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {submission.ai_match_details.skill_details.map((skill, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white/80 p-2.5 rounded-lg border border-gray-100/50 hover:border-primary/20 transition-all group">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-gray-800">{skill.required}</span>
+                          <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                            {skill.match_type === 'exact' ? (
+                              <span className="text-green-600 font-medium">Tam Eşleşme</span>
+                            ) : skill.match_type.includes('semantic') ? (
+                              <span className="text-blue-600 font-medium">Anlamsal Yakınlık: {skill.matched_to}</span>
+                            ) : skill.match_type.includes('ontology') ? (
+                              <span className="text-purple-600 font-medium">İlişkili Beceri: {skill.matched_to}</span>
+                            ) : (
+                              <span className="text-red-400 font-medium">Eksik</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                           {skill.similarity > 0 && skill.match_type !== 'exact' && (
+                             <div className="text-right">
+                               <p className="text-[10px] font-bold text-gray-400">BENZERLİK</p>
+                               <p className="text-[11px] font-bold text-primary">%{Math.round(skill.similarity * 100)}</p>
+                             </div>
+                           )}
+                           <div className={`w-2 h-2 rounded-full ${
+                             skill.satisfaction > 0.8 ? 'bg-green-500' :
+                             skill.satisfaction > 0.4 ? 'bg-yellow-400' : 'bg-gray-200'
+                           }`} />
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
 
-              {/* Missing Skills */}
-              {submission.ai_match_details.missing_skills && submission.ai_match_details.missing_skills.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-bold text-red-400 uppercase mb-1.5">Eksik Beceriler</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {submission.ai_match_details.missing_skills.map((skill, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-red-50 text-red-600 text-[11px] font-bold rounded-md border border-red-100">
-                        {skill}
-                      </span>
+              {/* Summary Reasons (Cleaned) */}
+              {submission.ai_match_details.reasons && submission.ai_match_details.reasons.length > 0 && (
+                <div className="pt-2 border-t border-primary/5">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase mb-2">Özet Değerlendirme</p>
+                  <div className="space-y-1.5">
+                    {submission.ai_match_details.reasons
+                      .filter(r => !r.includes("Semantically matched") && !r.includes("Missing required skills"))
+                      .map((reason, idx) => (
+                      <div key={idx} className="text-[13px] text-gray-700 bg-primary/5 p-2 rounded-lg border border-primary/10 leading-snug">
+                        {reason}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -247,14 +284,17 @@ function ReviewModal({
               {/* Top Projects */}
               {submission.ai_match_details.top_projects && submission.ai_match_details.top_projects.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-bold text-green-600 uppercase mb-1.5">Eşleşen Benzer Çalışmalar</p>
-                  <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-green-600 uppercase mb-2 flex items-center gap-1">
+                    <FiExternalLink className="w-3 h-3" /> Portfolyo Kanıtları
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {submission.ai_match_details.top_projects.map((proj, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-white/50 p-2 rounded-lg border border-green-100/50">
-                        <span className="text-xs text-gray-700 font-medium truncate pr-4">{proj.title}</span>
-                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded shrink-0">
-                          %{proj.similarity} Uyum
-                        </span>
+                      <div key={idx} className="bg-white/50 p-2 rounded-lg border border-green-100/50 flex flex-col justify-between">
+                        <span className="text-[11px] text-gray-700 font-medium line-clamp-1 mb-1">{proj.title}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] uppercase font-bold text-gray-400">Uyumluluk</span>
+                          <span className="text-[10px] font-bold text-green-600">%{proj.similarity}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
