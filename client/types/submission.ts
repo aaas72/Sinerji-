@@ -15,6 +15,8 @@ export interface Submission {
         reasons?: string[];
         missing_skills?: string[];
         top_projects?: Array<{ task_id: number; title: string; similarity: number }>;
+        strengths?: string[];
+        weaknesses?: string[];
         skill_details?: Array<{
             required: string;
             matched_to: string | null;

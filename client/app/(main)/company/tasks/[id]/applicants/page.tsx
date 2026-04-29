@@ -232,6 +232,43 @@ function ReviewModal({
                   {submission.ai_match_details.skill_details && submission.ai_match_details.skill_details.length > 0 && (
                     <div className="space-y-3">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-4">Yetenek Uyumluluk Matrisi</p>
+
+                      {/* Strategic Analysis: Strengths & Weaknesses */}
+                      {(submission.ai_match_details.strengths || submission.ai_match_details.weaknesses) && (
+                        <div className="grid grid-cols-1 gap-3 mb-6">
+                          {submission.ai_match_details.strengths && submission.ai_match_details.strengths.length > 0 && (
+                            <div className="bg-green-50/50 border border-green-100 rounded-xl p-3">
+                              <p className="text-[10px] font-bold text-green-700 uppercase mb-2 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                Güçlü Yönler
+                              </p>
+                              <ul className="space-y-1">
+                                {submission.ai_match_details.strengths.map((s, idx) => (
+                                  <li key={idx} className="text-[11px] text-green-800 flex items-start gap-1.5 leading-tight">
+                                    <span>•</span> {s}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {submission.ai_match_details.weaknesses && submission.ai_match_details.weaknesses.length > 0 && (
+                            <div className="bg-red-50/50 border border-red-100 rounded-xl p-3">
+                              <p className="text-[10px] font-bold text-red-700 uppercase mb-2 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                Gelişim Alanları
+                              </p>
+                              <ul className="space-y-1">
+                                {submission.ai_match_details.weaknesses.map((w, idx) => (
+                                  <li key={idx} className="text-[11px] text-red-800 flex items-start gap-1.5 leading-tight">
+                                    <span>•</span> {w}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {submission.ai_match_details.skill_details.map((skill, idx) => (
                         <div key={idx} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0 group">
                           <div className="flex flex-col">

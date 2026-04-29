@@ -395,6 +395,8 @@ def calculate_score(
             "top_projects": [],
             "missing_skills": compat["missing_required"],
             "skill_details": compat["skill_details"],
+            "strengths": [],
+            "weaknesses": [f"Missing mandatory skill: {req}" for req in compat["missing_required"]],
             "filtered": True,
         }
 
@@ -427,9 +429,31 @@ def calculate_score(
             f"semantic relevance: {semantic_score:.0f}%."
         )
 
+    # ── Analysis (Strengths & Weaknesses) ──────────────────────────────────────
+    strengths = []
+    weaknesses = []
+
+    # Analyze skills
+    for detail in compat["skill_details"]:
+        req = detail["required"]
+        if detail["match_type"] == "exact":
+            strengths.append(f"Strong mastery of {req} (Exact match)")
+        elif detail.get("satisfaction", 0) > 0.7:
+            strengths.append(f"Good competence in {req} via {detail.get('matched_to', 'direct skill')}")
+        elif detail["match_type"] == "missing":
+            weaknesses.append(f"Missing mandatory skill: {req}")
+        elif detail.get("satisfaction", 0) < 0.4:
+            weaknesses.append(f"Weak connection to {req} (Similarity: {int(detail.get('similarity', 0)*100)}%)")
+
+    # Analyze projects
+    top_projects = sem_stage["top_projects"]
+    if top_projects:
+        best_proj = top_projects[0]
+        if best_proj["similarity"] > 80:
+            strengths.append(f"Excellent portfolio evidence: '{best_proj['title']}'")
+
     return {
         "score": final_score,
-        # Keep "hard_score" key for API backward-compat (= skill_score)
         "hard_score": round(skill_score, 2),
         "semantic_score": round(semantic_score, 2),
         "breakdown": {
@@ -439,9 +463,11 @@ def calculate_score(
             "profile_similarity": sem_stage["profile_similarity"],
         },
         "reasons": reasons,
-        "top_projects": sem_stage["top_projects"],
+        "top_projects": top_projects,
         "missing_skills": compat["missing_required"],
         "skill_details": compat["skill_details"],
+        "strengths": strengths[:4],
+        "weaknesses": weaknesses[:4],
         "filtered": False,  # No hard filter – score is always meaningful
     }
 
