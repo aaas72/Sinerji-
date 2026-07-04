@@ -58,7 +58,7 @@ type RecommendTasksResponse = {
 // Matching Service to calculate match percentages between students and tasks
 export class MatchingService {
   private readonly configuredMatchingServiceUrl = (process.env.MATCHING_SERVICE_URL || '').trim();
-  private readonly matchingTimeoutMs = Number(process.env.MATCHING_SERVICE_TIMEOUT_MS || 5000);
+  private readonly matchingTimeoutMs = Number(process.env.MATCHING_SERVICE_TIMEOUT_MS || 30000);
   private readonly matchingAlpha = process.env.MATCHING_ALPHA ? Number(process.env.MATCHING_ALPHA) : undefined;
   private readonly matchingTopK = process.env.MATCHING_TOP_K ? Number(process.env.MATCHING_TOP_K) : undefined;
   private readonly matchingMinScore = process.env.MATCHING_MIN_SCORE ? Number(process.env.MATCHING_MIN_SCORE) : undefined;

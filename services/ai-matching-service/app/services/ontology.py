@@ -6,7 +6,7 @@ from app.core.logger import logger
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    _genai_model = genai.GenerativeModel("gemini-1.5-flash")
+    _genai_model = genai.GenerativeModel("gemini-flash-latest")
 else:
     _genai_model = None
 

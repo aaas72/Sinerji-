@@ -7,8 +7,9 @@ from app.models.schemas import (
 )
 from app.database.connection import db_cursor
 from app.database.queries import (
-    fetch_task_owner_id, fetch_task_candidate_ids, 
-    fetch_task_search_text, fetch_student_applied_task_ids
+    fetch_student_skills, fetch_student_profile_text, fetch_student_completed_projects,
+    fetch_task_requirements, fetch_task_owner_id, fetch_submission_content, fetch_task_candidate_ids,
+    fetch_task_search_text, fetch_student_applied_task_ids, fetch_recommended_task_ids
 )
 from app.services.matching import score_student_against_task
 from app.services.ontology import ensure_ontology_table, load_ontology_cache
@@ -62,7 +63,7 @@ async def match_student_tasks(payload: StudentMatchRequest):
     with db_cursor() as cur:
         ensure_ontology_table(cur)
         ontology_cache = load_ontology_cache(cur)
-        task_ids = fetch_student_applied_task_ids(cur, payload.student_user_id)
+        task_ids = fetch_recommended_task_ids(cur, payload.student_user_id)
         ranked: List[TaskScore] = []
         
         for task_id in task_ids:

@@ -76,3 +76,13 @@ def fetch_task_candidate_ids(cur, task_id: int) -> List[int]:
 def fetch_student_applied_task_ids(cur, student_user_id: int) -> List[int]:
     cur.execute("SELECT DISTINCT task_id FROM submissions WHERE student_user_id = %s", (student_user_id,))
     return [int(r[0]) for r in cur.fetchall()]
+
+def fetch_recommended_task_ids(cur, student_user_id: int) -> List[int]:
+    cur.execute(
+        """
+        SELECT id FROM tasks 
+        WHERE id NOT IN (SELECT task_id FROM submissions WHERE student_user_id = %s)
+        """, 
+        (student_user_id,)
+    )
+    return [int(r[0]) for r in cur.fetchall()]
