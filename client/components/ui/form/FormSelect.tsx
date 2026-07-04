@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, forwardRef } from "react";
 import { FiChevronDown } from "react-icons/fi";
 import { cn } from "@/utils/cn";
 import FormField from "./FormField";
@@ -34,7 +34,7 @@ const sizeClasses = {
   lg: "h-12 text-base px-4",
 };
 
-export default function FormSelect({
+const FormSelect = forwardRef<HTMLInputElement, FormSelectProps>(({
   options,
   value,
   onChange,
@@ -49,7 +49,7 @@ export default function FormSelect({
   className,
   wrapperClassName,
   selectSize = "md",
-}: FormSelectProps) {
+}, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -147,7 +147,7 @@ export default function FormSelect({
     >
       <div className="relative" ref={containerRef}>
         {/* Hidden input for form compatibility */}
-        <input type="hidden" name={name} value={value || ""} />
+        <input type="hidden" name={name} value={value || ""} ref={ref} />
 
         {/* Trigger Button */}
         <button
@@ -254,4 +254,8 @@ export default function FormSelect({
       </div>
     </FormField>
   );
-}
+});
+
+FormSelect.displayName = "FormSelect";
+
+export default FormSelect;

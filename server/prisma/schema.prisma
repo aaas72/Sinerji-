@@ -31,7 +31,6 @@ model StudentProfile {
   github_url             String?
   linkedin_url           String?
   phone                  String?
-  twitter_url            String?
   website_url            String?
   cv_url                 String?
   profile_image_url      String?

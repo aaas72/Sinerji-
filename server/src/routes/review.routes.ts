@@ -13,4 +13,7 @@ router.post('/submission/:submissionId', restrictTo('company'), reviewController
 // Shared routes
 router.get('/submission/:submissionId', reviewController.getReview);
 
+// Student routes
+router.post('/company/:submissionId', restrictTo('student'), reviewController.createCompanyReview);
+
 export default router;

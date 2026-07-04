@@ -4,6 +4,8 @@ import { createSubmissionSchema } from '../utils/validation';
 import { z } from 'zod';
 import { MatchingService } from './matching.service';
 import { MailService } from './mail.service';
+import axios from 'axios';
+import crypto from 'crypto';
 
 const matchingService = new MatchingService();
 const mailService = new MailService();
@@ -187,7 +189,6 @@ export class SubmissionService {
       
       if (status === 'approved' && submission.payment_status === 'escrow_locked' && submission.payment_transaction_id) {
           const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:5001';
-          const axios = require('axios');
           
           try {
               const releaseResponse = await axios.post(`${paymentServiceUrl}/api/payments/release`, {
@@ -201,8 +202,8 @@ export class SubmissionService {
               paymentStatusUpdate = 'released';
           } catch (error: any) {
               if (error instanceof AppError) throw error;
-              const errMsg = error.response?.data?.error || error.message;
-              throw new AppError(`Ödeme serbest bırakma işlemi microservice tarafında başarısız oldu: ${errMsg}`, error.response?.status || 500);
+              const errMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown network error';
+              throw new AppError(`Ödeme serbest bırakma işlemi microservice tarafında başarısız oldu: ${errMsg}`, error.response?.status || 502);
           }
       } else if (status === 'rejected' && submission.payment_status === 'escrow_locked' && submission.payment_transaction_id) {
           await this.cancelPayment(submission.payment_transaction_id);
@@ -212,7 +213,6 @@ export class SubmissionService {
       let guaranteeTokenUpdate: string | undefined = undefined;
       const validRewardTypes = ['Internship', 'Certificate', 'Recommendation', 'internship', 'certificate', 'recommendation'];
       if (status === 'approved' && submission.task.reward_type && validRewardTypes.includes(submission.task.reward_type)) {
-          const crypto = require('crypto');
           guaranteeTokenUpdate = crypto.randomUUID();
       }
 
@@ -375,7 +375,6 @@ export class SubmissionService {
     };
 
     const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:5001';
-    const axios = require('axios');
 
     try {
       // Mock payment for UI testing
@@ -420,8 +419,8 @@ export class SubmissionService {
       return updatedSubmission;
     } catch (error: any) {
       if (error instanceof AppError) throw error;
-      const errMsg = error.response?.data?.error || error.message;
-      throw new AppError(`Ödeme işlemi microservice tarafında başarısız oldu: ${errMsg}`, error.response?.status || 500);
+      const errMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown network error';
+      throw new AppError(`Ödeme işlemi microservice tarafında başarısız oldu: ${errMsg}`, error.response?.status || 502);
     }
   }
 
@@ -525,7 +524,6 @@ export class SubmissionService {
   
   private async cancelPayment(paymentTransactionId: string) {
     const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:5001';
-    const axios = require('axios');
     try {
       const response = await axios.post(`${paymentServiceUrl}/api/payments/cancel`, {
         paymentTransactionId
@@ -536,8 +534,8 @@ export class SubmissionService {
       return true;
     } catch (error: any) {
       if (error instanceof AppError) throw error;
-      const errMsg = error.response?.data?.error || error.message;
-      throw new AppError(`Ödeme iptal işlemi microservice tarafında başarısız oldu: ${errMsg}`, error.response?.status || 500);
+      const errMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown network error';
+      throw new AppError(`Ödeme iptal işlemi microservice tarafında başarısız oldu: ${errMsg}`, error.response?.status || 502);
     }
   }
 
