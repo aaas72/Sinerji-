@@ -90,6 +90,7 @@ export default function StudentProfileEditPage() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<StudentProfileFormData>({
     resolver: zodResolver(studentProfileSchema) as any,
@@ -99,6 +100,7 @@ export default function StudentProfileEditPage() {
     register: registerSkill,
     handleSubmit: handleSubmitSkill,
     reset: resetSkill,
+    watch: watchSkill,
     formState: { errors: skillErrors },
   } = useForm<AddSkillFormData>({
     resolver: zodResolver(addSkillSchema),
@@ -349,6 +351,7 @@ export default function StudentProfileEditPage() {
                 <FormSelect
                   label="Müsaitlik Durumu"
                   {...register("availability_status")}
+                  value={watch("availability_status")}
                   className="!rounded-full"
                   options={[
                     { value: "available", label: "Müsaitim (İş/Görev arıyorum)" },
@@ -421,6 +424,7 @@ export default function StudentProfileEditPage() {
                 <FormSelect
                   label="Kategori"
                   {...registerSkill("category")}
+                  value={watchSkill("category")}
                   className="!rounded-full"
                   options={[
                     { value: "Yazılım", label: "Yazılım" },
