@@ -288,16 +288,18 @@ export default function SubmissionDetailPage() {
               </div>
 
               {/* Communication info */}
-              <div>
-                <h4 className="text-[10px] font-bold text-[#565e74] uppercase tracking-wider mb-2">İletişim</h4>
-                <Link
-                  href={`/company/messages?studentId=${submission.student_user_id}`}
-                  className="w-full py-2.5 bg-[#00342b] text-white rounded-full font-bold text-xs hover:bg-[#004d40] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                >
-                  <FiMessageSquare className="w-3.5 h-3.5" />
-                  Mesaj Gönder
-                </Link>
-              </div>
+              {submission.status !== 'pending' && submission.status !== 'rejected' && (
+                <div>
+                  <h4 className="text-[10px] font-bold text-[#565e74] uppercase tracking-wider mb-2">İletişim</h4>
+                  <Link
+                    href={`/company/messages?studentId=${submission.student_user_id}`}
+                    className="w-full py-2.5 bg-[#00342b] text-white rounded-full font-bold text-xs hover:bg-[#004d40] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <FiMessageSquare className="w-3.5 h-3.5" />
+                    Mesaj Gönder
+                  </Link>
+                </div>
+              )}
 
               {/* Task and Terms details */}
               {task && (

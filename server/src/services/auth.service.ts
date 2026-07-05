@@ -101,4 +101,51 @@ export class AuthService {
       data: { password_hash: newPasswordHash },
     });
   }
+  async forgotPassword(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new AppError('Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı.', 404);
+    }
+
+    // Generate 6 digit code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        reset_password_token: resetCode,
+        reset_password_expires: expires
+      }
+    });
+
+    const { sendPasswordResetEmail } = require('./email.service');
+    await sendPasswordResetEmail(email, resetCode);
+    
+    return true;
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new AppError('Geçersiz veya süresi dolmuş kod.', 400);
+    }
+
+    if (user.reset_password_token !== code || !user.reset_password_expires || user.reset_password_expires < new Date()) {
+      throw new AppError('Geçersiz veya süresi dolmuş kod.', 400);
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password_hash: passwordHash,
+        reset_password_token: null,
+        reset_password_expires: null
+      }
+    });
+
+    return true;
+  }
 }

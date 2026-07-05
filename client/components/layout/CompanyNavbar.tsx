@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import NotificationBell from "@/components/ui/NotificationBell";
+import MessageIndicator from "@/components/ui/MessageIndicator";
 
 const navLinks = [
   { href: "/company/dashboard", label: "Özet" },
@@ -129,12 +130,7 @@ export default function CompanyNavbar() {
               <NotificationBell />
 
               {/* Messages */}
-              <Link
-                href="/company/messages"
-                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all relative"
-              >
-                <FiMessageSquare size={18} />
-              </Link>
+              <MessageIndicator />
 
               {/* Profile Circle Menu */}
               <div

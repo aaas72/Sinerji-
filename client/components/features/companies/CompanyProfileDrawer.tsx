@@ -95,14 +95,6 @@ export default function CompanyProfileDrawer({ isOpen, onClose, company }: Compa
                   >
                     Tüm Profili Görüntüle
                   </PrimaryButton>
-                  <PrimaryButton 
-                    variant="outline" 
-                    className="flex-1 rounded-full px-6 border-white/30 text-white hover:bg-white/10 hover:text-white"
-                    href={`/student/messages`}
-                    onClick={onClose}
-                  >
-                    Mesaj Gönder
-                  </PrimaryButton>
                 </div>
               </div>
             </div>

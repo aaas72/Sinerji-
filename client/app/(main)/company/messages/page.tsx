@@ -12,6 +12,7 @@ import ListSkeleton from "@/components/ui/ListSkeleton";
 import PageLoadingSkeleton from "@/components/ui/PageLoadingSkeleton";
 import { useSocket } from "@/context/SocketContext";
 import { useToast } from "@/context/ToastContext";
+import { studentService } from "@/services/student.service";
 
 function CompanyMessagesContent() {
   const { user } = useAuthStore();
@@ -41,9 +42,27 @@ function CompanyMessagesContent() {
         if (preSelectedStudentId) {
           const sid = parseInt(preSelectedStudentId);
           let found = data.find(c => c.id === sid);
-          // If not found, ideally we'd fetch the student profile and add them.
-          // But for now we just try to find them in the existing contacts.
-          if (found) setActiveContact(found);
+          
+          if (found) {
+            setActiveContact(found);
+          } else {
+            try {
+              const studentProfile = await studentService.getStudentById(sid);
+              const newContact: Contact = {
+                id: studentProfile.user_id,
+                name: studentProfile.full_name,
+                role: 'Öğrenci',
+                initials: studentProfile.full_name.substring(0, 2).toUpperCase(),
+                lastMessageTime: new Date().toISOString(),
+                unread: 0,
+                imageUrl: studentProfile.profile_image_url
+              };
+              data.unshift(newContact);
+              setActiveContact(newContact);
+            } catch (err) {
+              console.error("Failed to fetch student profile", err);
+            }
+          }
         }
 
         setContacts(data);
@@ -101,10 +120,16 @@ function CompanyMessagesContent() {
       });
     };
 
+    const handleDeleteMessageEvent = (data: { messageId: number }) => {
+      setMessages((prev) => prev.filter(msg => msg.id !== data.messageId));
+    };
+
     socket.on('receive_message', handleReceiveMessage);
+    socket.on('delete_message', handleDeleteMessageEvent);
 
     return () => {
       socket.off('receive_message', handleReceiveMessage);
+      socket.off('delete_message', handleDeleteMessageEvent);
     };
   }, [socket, connected, activeContact, user?.id]);
 
@@ -117,6 +142,18 @@ function CompanyMessagesContent() {
     } catch (error: any) {
       console.error("Failed to send message", error);
       const errorMsg = error.response?.data?.message || error.message || "Mesaj gönderilemedi";
+      showToast(errorMsg, "error");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: number) => {
+    try {
+      await messageService.deleteMessage(messageId);
+      setMessages((prev) => prev.filter(msg => msg.id !== messageId));
+      showToast("Mesaj silindi", "success");
+    } catch (error: any) {
+      console.error("Failed to delete message", error);
+      const errorMsg = error.response?.data?.message || error.message || "Mesaj silinemedi";
       showToast(errorMsg, "error");
     }
   };
@@ -256,9 +293,7 @@ function CompanyMessagesContent() {
                         {/* Hover Actions (Sent) */}
                         {isMe && (
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-2">
-                            <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full" title="Yanıtla"><FiCornerUpLeft size={14} /></button>
-                            <button onClick={() => handleCopyMessage(msg.content)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full" title="Kopyala"><FiCopy size={14} /></button>
-                            <button className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full" title="Sil"><FiTrash2 size={14} /></button>
+                            <button onClick={() => handleDeleteMessage(msg.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full" title="Sil"><FiTrash2 size={14} /></button>
                           </div>
                         )}
 
@@ -276,8 +311,6 @@ function CompanyMessagesContent() {
                         {/* Hover Actions (Received) */}
                         {!isMe && (
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                            <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full" title="Yanıtla"><FiCornerUpLeft size={14} /></button>
-                            <button onClick={() => handleCopyMessage(msg.content)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full" title="Kopyala"><FiCopy size={14} /></button>
                           </div>
                         )}
                       </div>
@@ -305,9 +338,9 @@ function CompanyMessagesContent() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="flex-1 h-12 px-5 rounded-[50px] bg-white border border-[#DFDED6] text-sm focus:border-[#00342b] focus:ring-1 focus:ring-[#00342b] outline-none transition-all"
                   />
-                  <PrimaryButton onClick={handleSendMessage} variant="primary" className="h-12 w-12 rounded-xl flex items-center justify-center p-0 shrink-0 bg-[#00342b] hover:bg-[#002620] border-none text-white">
+                  <button onClick={handleSendMessage} className="h-12 w-12 rounded-xl flex items-center justify-center p-0 shrink-0 bg-[#00342b] hover:bg-[#002620] border-none text-white transition-colors">
                     <FiSend size={18} className="ml-0.5" />
-                  </PrimaryButton>
+                  </button>
                 </div>
               </div>
             </>

@@ -80,6 +80,28 @@ export const getContacts = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const getUnreadCount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      return next(new AppError('Not authenticated', 401));
+    }
+    
+    const unreadCount = await prisma.message.count({
+      where: {
+        receiver_id: req.user.id,
+        is_read: false
+      }
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: { unreadCount }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMessages = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
@@ -189,21 +211,48 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
       getIO().to(receiverSocket).emit('receive_message', message);
     }
 
-    const receiver = await prisma.user.findUnique({ where: { id: receiverIdInt } });
-    const notificationLink = receiver?.role === 'company' ? '/company/messages' : '/student/messages';
-
-    // Send Notification
-    await notificationService.createNotification(
-      receiverIdInt,
-      'Yeni Mesaj',
-      `${senderName} size yeni bir mesaj gönderdi.`,
-      'message',
-      notificationLink
-    );
-
     res.status(201).json({
       status: 'success',
       data: { message }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteMessage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      return next(new AppError('Not authenticated', 401));
+    }
+    const currentUserId = req.user.id;
+    const messageId = parseInt(req.params.id);
+
+    const message = await prisma.message.findUnique({
+      where: { id: messageId }
+    });
+
+    if (!message) {
+      return next(new AppError('Message not found', 404));
+    }
+
+    if (message.sender_id !== currentUserId) {
+      return next(new AppError('You can only delete your own messages', 403));
+    }
+
+    await prisma.message.delete({
+      where: { id: messageId }
+    });
+
+    // Optionally notify the receiver via socket so they can remove it from their UI
+    const receiverSocket = userSockets.get(message.receiver_id);
+    if (receiverSocket) {
+      getIO().to(receiverSocket).emit('delete_message', { messageId });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: null
     });
   } catch (error) {
     next(error);

@@ -138,7 +138,7 @@ export default function ApplicationCard({
               Çalışma Alanı
             </PrimaryButton>
           )}
-          {companyId && (
+          {companyId && (status === "Devam Ediyor" || status === "Tamamlandı" || status === "Değerlendirildi") && (
             <PrimaryButton 
               variant="outline"
               onClick={(e) => {

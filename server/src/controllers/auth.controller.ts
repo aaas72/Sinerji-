@@ -122,4 +122,43 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      throw new AppError('Email is required', 400);
+    }
 
+    await authService.forgotPassword(email);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    
+    if (!email || !code || !newPassword) {
+      throw new AppError('Email, kod ve yeni şifre gereklidir.', 400);
+    }
+
+    if (newPassword.length < 6) {
+      throw new AppError('Şifre en az 6 karakter olmalıdır.', 400);
+    }
+
+    await authService.resetPassword(email, code, newPassword);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -55,14 +55,10 @@ export default function StudentExploreCard({ student, className = "", variant = 
 
       <div className={`mt-auto pt-4 border-t flex items-center gap-3 ${isGlass ? "border-white/20" : "border-[#dfded6]/50"}`}>
         <PrimaryButton 
-          icon={FiUserPlus} 
           className={`w-full rounded-full py-2 ${isGlass ? "!bg-white !text-[#00342b] hover:!bg-white/90" : ""}`}
-          onClick={(e) => {
-             e.stopPropagation();
-             // Davet et logic here if needed
-          }}
+          onClick={onClick}
         >
-          Davet Et
+          Profili İncele
         </PrimaryButton>
       </div>
     </div>

@@ -26,6 +26,11 @@ export const messageService = {
     return response.data.data.contacts;
   },
 
+  async getUnreadCount(): Promise<number> {
+    const response = await api.get<ApiResponse<{ unreadCount: number }>>('/messages/unread-count');
+    return response.data.data.unreadCount;
+  },
+
   async getMessages(userId: number): Promise<Message[]> {
     const response = await api.get<ApiResponse<{ messages: Message[] }>>(`/messages/${userId}`);
     return response.data.data.messages;
@@ -34,5 +39,9 @@ export const messageService = {
   async sendMessage(receiver_id: number, content: string): Promise<Message> {
     const response = await api.post<ApiResponse<{ message: Message }>>('/messages', { receiver_id, content });
     return response.data.data.message;
+  },
+
+  async deleteMessage(messageId: number): Promise<void> {
+    await api.delete(`/messages/${messageId}`);
   }
 };

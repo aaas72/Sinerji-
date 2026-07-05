@@ -666,25 +666,6 @@ export default function EditTaskPage() {
               </div>
             </SectionCard>
 
-            {/* AI Matching Indicator Card */}
-            <SectionCard icon={FiZap} title="AI Eşleşme Analizi" className="relative overflow-hidden group">
-              <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <FiZap className="w-24 h-24 text-primary" />
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle cx="32" cy="32" r="28" fill="transparent" stroke="#DFDED6" strokeWidth="4" />
-                    <circle cx="32" cy="32" r="28" fill="transparent" stroke="#00342b" strokeWidth="4" strokeDasharray="176" strokeDashoffset={176 - (176 * 82) / 100} strokeLinecap="round" className="transition-all duration-1000" />
-                  </svg>
-                  <span className="absolute text-xs font-bold text-primary">82%</span>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-600">Talent Pool Uyumu</p>
-                  <p className="text-[10px] text-slate-400 mt-1">Bu kriterlere uygun <span className="text-primary font-bold">24</span> potansiyel aday bulundu.</p>
-                </div>
-              </div>
-            </SectionCard>
 
             {/* Stats Card */}
             <section className="bg-primary/5 rounded-2xl p-5 border-none">

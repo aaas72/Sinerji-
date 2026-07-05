@@ -19,6 +19,8 @@ model User {
   sentMessages   Message[]       @relation("SentMessages")
   receivedMessages Message[]     @relation("ReceivedMessages")
   notifications  Notification[]
+  reset_password_token   String?
+  reset_password_expires DateTime?
 
   @@map("users")
 }

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, registerSchema, LoginFormData, RegisterFormData, User } from "@/types/auth";
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema, LoginFormData, RegisterFormData, ForgotPasswordFormData, ResetPasswordFormData, User } from "@/types/auth";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/hooks/useAuth";
 import { useAuthModal } from "@/hooks/useAuthModal";
@@ -97,11 +97,15 @@ export default function AuthModal() {
             <h2 className="text-3xl font-bold font-heading mb-3">
               {view === "login"
                 ? "Tekrar Hoş Geldiniz!"
+                : view === "forgot_password" || view === "reset_password"
+                ? "Şifrenizi Kurtarın"
                 : "Başarı Burada Başlar"}
             </h2>
             <p className="text-white/70 text-sm leading-relaxed mb-8">
               {view === "login"
                 ? "Hesabınıza giriş yapın ve fırsatlarınızı keşfedin."
+                : view === "forgot_password" || view === "reset_password"
+                ? "Şifrenizi unuttuysanız endişelenmeyin, size yardımcı olacağız."
                 : "Hesap oluşturun ve yeteneğinizi dünyaya kanıtlayın."}
             </p>
 
@@ -140,7 +144,7 @@ export default function AuthModal() {
             {/* Header */}
             <div className="mb-6">
               <h3 className="text-2xl font-bold text-gray-900 font-heading">
-                {view === "login" ? "Giriş Yap" : "Yeni Hesap Oluştur"}
+                {view === "login" ? "Giriş Yap" : view === "forgot_password" ? "Şifremi Unuttum" : view === "reset_password" ? "Yeni Şifre Belirle" : "Yeni Hesap Oluştur"}
               </h3>
               <p className="text-sm text-gray-500 mt-1">
                 {view === "login" ? (
@@ -151,6 +155,16 @@ export default function AuthModal() {
                       className="text-[#004d40] font-semibold hover:underline"
                     >
                       Kayıt Ol
+                    </button>
+                  </>
+                ) : view === "forgot_password" || view === "reset_password" ? (
+                  <>
+                    Şifrenizi hatırladınız mı?{" "}
+                    <button
+                      onClick={() => switchView("login")}
+                      className="text-[#004d40] font-semibold hover:underline"
+                    >
+                      Giriş Yap
                     </button>
                   </>
                 ) : (
@@ -179,6 +193,10 @@ export default function AuthModal() {
             {/* Form */}
             {view === "login" ? (
               <LoginForm onSuccess={handleSuccess} />
+            ) : view === "forgot_password" ? (
+              <ForgotPasswordForm />
+            ) : view === "reset_password" ? (
+              <ResetPasswordForm />
             ) : (
               <RegisterForm onSuccess={handleSuccess} />
             )}
@@ -212,6 +230,7 @@ function LoginForm({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { showLoader, hideLoader } = useGlobalLoader();
+  const { switchView } = useAuthModal();
 
   const {
     register,
@@ -282,6 +301,16 @@ function LoginForm({
         {errors.password && (
           <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
         )}
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => switchView("forgot_password")}
+          className="text-sm font-semibold text-[#004d40] hover:underline"
+        >
+          Şifremi Unuttum?
+        </button>
       </div>
 
       <PrimaryButton
@@ -446,7 +475,172 @@ function RegisterForm({
         className="w-full bg-[#004d40] hover:bg-[#003830] text-white py-3 text-sm font-semibold rounded-full transition-all duration-300 hover:-translate-y-0.5 mt-2"
         disabled={isLoading}
       >
-        {isLoading ? "Hesap oluşturuluyor..." : "Hesap Oluştur"}
+      </PrimaryButton>
+    </form>
+  );
+}
+
+/* ─── Forgot Password Form ─── */
+function ForgotPasswordForm() {
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { switchView } = useAuthModal();
+  const { showLoader, hideLoader } = useGlobalLoader();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
+
+  const onSubmit = async (data: ForgotPasswordFormData) => {
+    setIsLoading(true);
+    showLoader("Kod gönderiliyor...");
+    setError("");
+    try {
+      await authService.forgotPassword(data.email);
+      // Store email temporarily so reset form can use it if we wanted to, or let the user type it.
+      // Usually, it's passed via state. For simplicity, we just switch view.
+      localStorage.setItem("reset_email", data.email);
+      hideLoader();
+      switchView("reset_password");
+    } catch (err: unknown) {
+      hideLoader();
+      setError(err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+          <FiX size={16} className="shrink-0" />
+          {error}
+        </div>
+      )}
+      <p className="text-sm text-gray-600 mb-4">
+        E-posta adresinizi girin. Size şifrenizi sıfırlamanız için 6 haneli bir kod göndereceğiz.
+      </p>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          E-posta
+        </label>
+        <Input
+          type="email"
+          {...register("email")}
+          className="px-4 py-3 bg-white text-sm"
+          placeholder="ornek@email.com"
+          error={!!errors.email}
+        />
+        {errors.email && (
+          <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+        )}
+      </div>
+
+      <PrimaryButton
+        type="submit"
+        className="w-full bg-[#004d40] hover:bg-[#003830] text-white py-3 text-sm font-semibold rounded-full transition-all duration-300 hover:-translate-y-0.5 mt-2"
+        disabled={isLoading}
+      >
+        {isLoading ? "Gönderiliyor..." : "Kodu Gönder"}
+      </PrimaryButton>
+    </form>
+  );
+}
+
+/* ─── Reset Password Form ─── */
+function ResetPasswordForm() {
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { switchView } = useAuthModal();
+  const { showLoader, hideLoader } = useGlobalLoader();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+  });
+
+  const onSubmit = async (data: ResetPasswordFormData) => {
+    setIsLoading(true);
+    showLoader("Şifreniz güncelleniyor...");
+    setError("");
+    try {
+      const email = localStorage.getItem("reset_email") || "";
+      if (!email) throw new Error("E-posta bulunamadı. Lütfen tekrar kod isteyin.");
+      
+      await authService.resetPassword({
+        email,
+        code: data.code,
+        newPassword: data.newPassword,
+      });
+      localStorage.removeItem("reset_email");
+      hideLoader();
+      switchView("login");
+    } catch (err: unknown) {
+      hideLoader();
+      setError(err instanceof Error ? err.message : "Şifre sıfırlanamadı.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+          <FiX size={16} className="shrink-0" />
+          {error}
+        </div>
+      )}
+      <p className="text-sm text-gray-600 mb-4">
+        E-postanıza gelen 6 haneli kodu ve yeni şifrenizi girin.
+      </p>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          6 Haneli Kod
+        </label>
+        <Input
+          type="text"
+          {...register("code")}
+          className="px-4 py-3 bg-white text-sm"
+          placeholder="123456"
+          error={!!errors.code}
+        />
+        {errors.code && (
+          <p className="text-red-500 text-xs mt-1">{errors.code.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Yeni Şifre
+        </label>
+        <Input
+          type="password"
+          {...register("newPassword")}
+          className="px-4 py-3 bg-white text-sm"
+          placeholder="••••••••"
+          error={!!errors.newPassword}
+        />
+        {errors.newPassword && (
+          <p className="text-red-500 text-xs mt-1">{errors.newPassword.message}</p>
+        )}
+      </div>
+
+      <PrimaryButton
+        type="submit"
+        className="w-full bg-[#004d40] hover:bg-[#003830] text-white py-3 text-sm font-semibold rounded-full transition-all duration-300 hover:-translate-y-0.5 mt-2"
+        disabled={isLoading}
+      >
+        {isLoading ? "Güncelleniyor..." : "Şifreyi Güncelle"}
       </PrimaryButton>
     </form>
   );

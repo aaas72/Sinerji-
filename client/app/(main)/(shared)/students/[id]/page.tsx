@@ -197,15 +197,7 @@ export default function ProfilePage() {
               >
                 <FiEdit className="mr-2" /> Profili Düzenle
               </PrimaryButton>
-            ) : (
-              <PrimaryButton 
-                variant="primary" 
-                className="!rounded-full"
-                onClick={() => router.push(`/messages/new?to=${profile.user_id}`)}
-              >
-                <FiMessageSquare className="mr-2" /> Mesaj Gönder
-              </PrimaryButton>
-            )}
+            ) : null}
           </div>
         </div>
 

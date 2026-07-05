@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import NotificationBell from "@/components/ui/NotificationBell";
+import MessageIndicator from "@/components/ui/MessageIndicator";
 import { useEffect, useRef, useState } from "react";
 import { IconType } from "react-icons";
 import { useAuthStore } from "@/hooks/useAuth";
@@ -271,12 +272,7 @@ export default function Navbar({ authenticated, userName, role }: NavbarProps) {
                 <NotificationBell />
 
                 {/* Messages */}
-                <Link
-                  href={userRole === "company" ? "/company/messages" : "/student/messages"}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all relative"
-                >
-                  <FiMessageSquare size={18} />
-                </Link>
+                <MessageIndicator />
 
                 {/* Profile Circle Menu */}
                 <div

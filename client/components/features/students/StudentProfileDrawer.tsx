@@ -80,12 +80,7 @@ export default function StudentProfileDrawer({ isOpen, onClose, student }: Stude
 
                 {/* Action Buttons */}
                 <div className="flex w-full gap-3 mt-8">
-                  <PrimaryButton icon={FiUserPlus} className="flex-1 rounded-full py-2.5 justify-center bg-[#e28743] hover:bg-[#c47133] text-white">
-                    Göreve Davet Et
-                  </PrimaryButton>
-                  <PrimaryButton variant="outline" className="flex-1 rounded-full px-6 border-white/30 text-white hover:bg-white/10 hover:text-white">
-                    Mesaj Gönder
-                  </PrimaryButton>
+                  {/* Buttons removed before assignment */}
                 </div>
                 
                 {/* View Full Profile Link */}
